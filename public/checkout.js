@@ -1,86 +1,121 @@
-let cart =
-  JSON.parse(localStorage.getItem("thulirCart")) || [];
+const cart = JSON.parse(
+  localStorage.getItem("thulirCart") || "[]"
+);
+
+const form = document.getElementById("checkoutForm");
+const summary = document.getElementById("checkoutSummary");
+const message = document.getElementById("checkoutMessage");
 
 
-// SHOW ORDER SUMMARY
+function showCartSummary() {
 
-function showSummary() {
-
-  const summary =
-    document.getElementById("checkoutSummary");
-
-  if (!cart.length) {
+  if (cart.length === 0) {
 
     summary.innerHTML = `
-      <p>
-        Your cart is empty.
-      </p>
-
-      <a href="index.html">
-        ← Go to Menu
-      </a>
+      <div class="checkout-summary">
+        <h3>Your Cart</h3>
+        <p>Your cart is empty.</p>
+        <a href="index.html">Go back to menu</a>
+      </div>
     `;
 
     return;
   }
 
-
   let total = 0;
 
+  let html = `
+    <div class="checkout-summary">
 
-  const itemsHTML = cart.map(item => {
+      <h3>Order Summary</h3>
+  `;
+
+  cart.forEach(item => {
+
+    // Support the existing cart structure
+    const name =
+      item.name || item.food_name || "Food Item";
+
+    const price =
+      Number(item.price || item.unit_price || 0);
+
+    const quantity =
+      Number(
+        item.quantity ||
+        item.qty ||
+        1
+      );
 
     const itemTotal =
-      Number(item.price) * item.qty;
+      price * quantity;
 
     total += itemTotal;
 
-    return `
-      <p>
+    html += `
+      <div class="checkout-summary-row">
+
+        <span>
+          ${name} × ${quantity}
+        </span>
+
         <strong>
-          ${item.name}
+          ₹${itemTotal.toFixed(2)}
         </strong>
 
-        × ${item.qty}
-
-        — ₹${itemTotal.toFixed(0)}
-      </p>
+      </div>
     `;
+  });
 
-  }).join("");
+
+  html += `
+
+      <div class="checkout-total">
+
+        <span>
+          Total Amount
+        </span>
+
+        <strong>
+          ₹${total.toFixed(2)}
+        </strong>
+
+      </div>
 
 
-  summary.innerHTML = `
+      <div class="payment-summary">
 
-    <hr>
+        <span>
+          Payment Method
+        </span>
 
-    <h3>
-      Order Summary
-    </h3>
+        <strong>
+          💵 Cash on Delivery
+        </strong>
 
-    ${itemsHTML}
+      </div>
 
-    <h2>
-      Total: ₹${total.toFixed(0)}
-    </h2>
-
+    </div>
   `;
+
+
+  summary.innerHTML = html;
 }
 
 
+showCartSummary();
 
-// PLACE ORDER
 
-document
-  .getElementById("checkoutForm")
-  .addEventListener("submit", async function(event) {
+form.addEventListener(
+  "submit",
+  async function(event) {
 
     event.preventDefault();
 
 
-    if (!cart.length) {
+    if (cart.length === 0) {
 
-      alert("Your cart is empty.");
+      message.textContent =
+        "❌ Your cart is empty.";
 
       return;
     }
@@ -95,65 +130,58 @@ document
 
     const phone =
       document
-        .getElementById("customerPhone")
+        .getElementById("phone")
         .value
         .trim();
-        if (!/^[0-9]{10}$/.test(phone)) {
-
-  alert("Please enter a valid 10-digit phone number.");
-
-  return;
-}
 
 
     const address =
       document
-        .getElementById("customerAddress")
+        .getElementById("address")
         .value
         .trim();
 
 
-    const orderMessage =
-      document.getElementById("orderMessage");
+    if (!/^[0-9]{10}$/.test(phone)) {
+
+      message.textContent =
+        "❌ Please enter a valid 10-digit phone number.";
+
+      return;
+    }
 
 
-    let total = 0;
+    if (!customerName || !address) {
 
-    cart.forEach(item => {
+      message.textContent =
+        "❌ Please fill in all required details.";
 
-      total +=
-        Number(item.price) * item.qty;
-
-    });
+      return;
+    }
 
 
-    const orderData = {
+    const items = cart.map(item => ({
 
-      customer_name: customerName,
+      food_id:
+        Number(
+          item.food_id ||
+          item.id
+        ),
 
-      phone: phone,
+      quantity:
+        Number(
+          item.quantity ||
+          item.qty ||
+          1
+        )
 
-      address: address,
-
-      total_amount: total,
-
-      items: cart.map(item => ({
-
-        food_id: item.food_id,
-
-        quantity: item.qty,
-
-        price: Number(item.price)
-
-      }))
-
-    };
+    }));
 
 
     try {
 
-      orderMessage.textContent =
-        "Placing your order...";
+      message.textContent =
+        "⏳ Placing your order...";
 
 
       const response =
@@ -165,7 +193,24 @@ document
             "Content-Type": "application/json"
           },
 
-          body: JSON.stringify(orderData)
+          body: JSON.stringify({
+
+            customer_name:
+              customerName,
+
+            phone:
+              phone,
+
+            address:
+              address,
+
+            payment_method:
+              "Cash on Delivery",
+
+            items:
+              items
+
+          })
 
         });
 
@@ -178,106 +223,30 @@ document
 
         throw new Error(
           data.message ||
-          "Failed to place order."
+          "Unable to place order."
         );
 
       }
 
 
-      // CLEAR CART
-
       localStorage.removeItem(
         "thulirCart"
       );
 
-      cart = [];
 
-
-      // SHOW SUCCESS
-
-      document.getElementById(
-        "checkoutForm"
-      ).style.display = "none";
-
-
-      document.getElementById(
-        "checkoutSummary"
-      ).style.display = "none";
-
-
-      orderMessage.innerHTML = `
-
-        <div class="tracking-card">
-
-          <h2>
-            🎉 Order Placed Successfully!
-          </h2>
-
-          <p>
-            Thank you, ${customerName}.
-          </p>
-
-          <p>
-            Your Order ID is:
-          </p>
-
-          <h1>
-            #${data.order_id}
-          </h1>
-
-          <p>
-            <strong>
-              Total Amount:
-            </strong>
-
-            ₹${total.toFixed(0)}
-          </p>
-
-          <p>
-            Your order has been received by
-            Thulir Unavagam.
-          </p>
-
-          <br>
-
-          <a
-            href="index.html#tracking"
-            class="primary-btn"
-          >
-            📦 Track Your Order
-          </a>
-
-          <a
-            href="index.html"
-            class="primary-btn"
-          >
-            🍽️ Back to Menu
-          </a>
-
-        </div>
-
-      `;
-
-
-    } catch (error) {
-
-      console.error(
-        "ORDER ERROR:",
-        error
-      );
-
-
-      orderMessage.innerHTML = `
-
-        <p>
-          ❌ ${error.message}
-        </p>
-
-      `;
+      window.location.href =
+        `order-confirmation.html?order_id=${data.order_id}`;
 
     }
 
-  });
+    catch(error) {
 
+      console.error(error);
 
-showSummary();
+      message.textContent =
+        "❌ " + error.message;
+
+    }
+
+  }
+);

@@ -1,30 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
+  <title>Checkout | Thulir Unavagam</title>
 
-  <title>
-    Checkout | Thulir Unavagam
-  </title>
-
-  <link
-    rel="stylesheet"
-    href="style.css"
-  >
-
+  <link rel="stylesheet" href="style.css">
 </head>
 
-
 <body>
-
-  <!-- NAVBAR -->
 
   <header class="navbar">
 
@@ -37,18 +22,13 @@
 
       <div>
 
-        <h1>
-          Thulir Unavagam
-        </h1>
+        <h1>Thulir Unavagam</h1>
 
-        <p>
-          Fresh food, every day
-        </p>
+        <p>Fresh food, every day</p>
 
       </div>
 
     </div>
-
 
     <div class="nav-actions">
 
@@ -57,16 +37,13 @@
       </a>
 
       <a href="cart.html">
-        🛒 Cart
+        Cart
       </a>
 
     </div>
 
   </header>
 
-
-
-  <!-- CHECKOUT -->
 
   <main>
 
@@ -83,18 +60,13 @@
         </h2>
 
         <p>
-          Enter your details to place your order.
+          Enter your details and place your order.
         </p>
 
       </div>
 
 
       <div class="checkout-box">
-
-        <h2>
-          Delivery Details
-        </h2>
-
 
         <form id="checkoutForm">
 
@@ -110,28 +82,55 @@
           >
 
 
-          <label for="customerPhone">
+          <label for="phone">
             Phone Number
           </label>
 
           <input
             type="tel"
-            id="customerPhone"
-            placeholder="Enter your phone number"
+            id="phone"
+            placeholder="Enter 10-digit phone number"
+            maxlength="10"
             required
           >
 
 
-          <label for="customerAddress">
+          <label for="address">
             Delivery Address
           </label>
 
           <textarea
-            id="customerAddress"
+            id="address"
+            placeholder="Enter your complete delivery address"
             rows="4"
-            placeholder="Enter your delivery address"
             required
           ></textarea>
+
+
+          <!-- PAYMENT METHOD -->
+
+          <label>
+            Payment Method
+          </label>
+
+          <div class="payment-option">
+
+            <label class="payment-card">
+
+              <input
+                type="radio"
+                name="payment_method"
+                value="Cash on Delivery"
+                checked
+              >
+
+              <span>
+                💵 Cash on Delivery
+              </span>
+
+            </label>
+
+          </div>
 
 
           <div id="checkoutSummary"></div>
@@ -141,13 +140,13 @@
             type="submit"
             class="checkout-btn"
           >
-            Place Order
+            🛒 Place Order
           </button>
 
         </form>
 
 
-        <p id="orderMessage"></p>
+        <p id="checkoutMessage"></p>
 
       </div>
 
@@ -155,9 +154,6 @@
 
   </main>
 
-
-
-  <!-- FOOTER -->
 
   <footer>
 
@@ -176,8 +172,6 @@
   </footer>
 
 
-  <script src="checkout.js"></script>
+<script src="checkout.js"></script>
 
-</body>
-
-</html>
+</body></html>
