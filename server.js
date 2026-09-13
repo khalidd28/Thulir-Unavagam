@@ -879,12 +879,8 @@ app.get("/", (req, res) => {
 // START SERVER
 // =================================
 
-const PORT = process.env.PORT || 5000;
+const PORT = Number(process.env.PORT) || 5000;
 
-app.listen(PORT, () => {
-
-  console.log(
-    `Thulir Unavagam server running at http://localhost:${PORT}`
-  );
-
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Thulir Unavagam server running on port ${PORT}`);
 });
