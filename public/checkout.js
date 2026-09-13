@@ -47,7 +47,7 @@ function showCartSummary() {
 
     html += `
       <div class="checkout-summary-row">
-        <span>${name} × ${quantity}</span>
+        <span>${escapeHtml(name)} × ${quantity}</span>
         <strong>₹${itemTotal.toFixed(2)}</strong>
       </div>
     `;
@@ -151,7 +151,6 @@ form.addEventListener("submit", async function (event) {
       "⏳ Placing your order...";
 
 
-    // Send order to backend
     const response = await fetch("/api/orders", {
 
       method: "POST",
@@ -197,10 +196,6 @@ form.addEventListener("submit", async function (event) {
     const orderId = data.order_id;
 
 
-    // Clear cart
-    localStorage.removeItem("thulirCart");
-
-
     // Calculate total
     let totalAmount = 0;
 
@@ -217,7 +212,44 @@ form.addEventListener("submit", async function (event) {
     });
 
 
-    // Replace current page with confirmation
+    // Create receipt items
+    let receiptItems = "";
+
+    cart.forEach(item => {
+
+      const name =
+        item.name ||
+        item.food_name ||
+        "Food Item";
+
+      const price =
+        Number(item.price || item.unit_price || 0);
+
+      const quantity =
+        Number(item.quantity || item.qty || 1);
+
+      const itemTotal =
+        price * quantity;
+
+      receiptItems += `
+        <tr>
+          <td>${escapeHtml(name)}</td>
+          <td>${quantity}</td>
+          <td>₹${price.toFixed(2)}</td>
+          <td>₹${itemTotal.toFixed(2)}</td>
+        </tr>
+      `;
+    });
+
+
+    // Clear cart
+    localStorage.removeItem("thulirCart");
+
+
+    // ===============================
+    // SHOW CONFIRMATION + RECEIPT
+    // ===============================
+
     document.body.innerHTML = `
 
       <header class="navbar">
@@ -257,7 +289,7 @@ form.addEventListener("submit", async function (event) {
           <div
             class="checkout-box"
             style="
-              max-width:650px;
+              max-width:750px;
               margin:40px auto;
               text-align:center;
             "
@@ -289,43 +321,207 @@ form.addEventListener("submit", async function (event) {
             </p>
 
 
+            <!-- RECEIPT -->
+
             <div
+              id="receipt"
               style="
-                background:#f5f5f5;
-                padding:20px;
-                border-radius:10px;
-                margin:25px 0;
+                background:#ffffff;
+                border:1px solid #ddd;
+                border-radius:14px;
+                padding:25px;
+                margin:30px 0;
                 text-align:left;
+                box-shadow:0 8px 25px rgba(0,0,0,0.06);
               "
             >
 
-              <p>
-                <strong>Order Number:</strong>
-                #${orderId}
-              </p>
+              <div
+                style="
+                  text-align:center;
+                  border-bottom:1px solid #ddd;
+                  padding-bottom:18px;
+                  margin-bottom:20px;
+                "
+              >
 
-              <p>
-                <strong>Customer:</strong>
-                ${customerName}
-              </p>
+                <h2 style="margin:0;">
+                  🍽️ Thulir Unavagam
+                </h2>
 
-              <p>
-                <strong>Phone:</strong>
-                ${phone}
-              </p>
+                <p style="margin:5px 0;">
+                  Fresh food, every day
+                </p>
 
-              <p>
-                <strong>Total Amount:</strong>
-                ₹${totalAmount.toFixed(2)}
-              </p>
+                <h3 style="margin:12px 0 0;">
+                  ORDER RECEIPT
+                </h3>
 
-              <p>
-                <strong>Payment:</strong>
-                💵 Cash on Delivery
-              </p>
+              </div>
+
+
+              <div
+                style="
+                  display:grid;
+                  grid-template-columns:1fr 1fr;
+                  gap:10px;
+                  margin-bottom:20px;
+                "
+              >
+
+                <p>
+                  <strong>Order Number:</strong><br>
+                  #${orderId}
+                </p>
+
+                <p>
+                  <strong>Customer:</strong><br>
+                  ${escapeHtml(customerName)}
+                </p>
+
+                <p>
+                  <strong>Phone:</strong><br>
+                  ${escapeHtml(phone)}
+                </p>
+
+                <p>
+                  <strong>Payment:</strong><br>
+                  💵 Cash on Delivery
+                </p>
+
+                <p style="grid-column:1 / -1;">
+                  <strong>Delivery Address:</strong><br>
+                  ${escapeHtml(address)}
+                </p>
+
+              </div>
+
+
+              <div style="overflow-x:auto;">
+
+                <table
+                  style="
+                    width:100%;
+                    border-collapse:collapse;
+                    margin-top:15px;
+                  "
+                >
+
+                  <thead>
+
+                    <tr style="background:#f5f5f5;">
+
+                      <th
+                        style="
+                          padding:10px;
+                          border-bottom:1px solid #ddd;
+                          text-align:left;
+                        "
+                      >
+                        Item
+                      </th>
+
+                      <th
+                        style="
+                          padding:10px;
+                          border-bottom:1px solid #ddd;
+                          text-align:center;
+                        "
+                      >
+                        Qty
+                      </th>
+
+                      <th
+                        style="
+                          padding:10px;
+                          border-bottom:1px solid #ddd;
+                          text-align:right;
+                        "
+                      >
+                        Price
+                      </th>
+
+                      <th
+                        style="
+                          padding:10px;
+                          border-bottom:1px solid #ddd;
+                          text-align:right;
+                        "
+                      >
+                        Total
+                      </th>
+
+                    </tr>
+
+                  </thead>
+
+
+                  <tbody>
+
+                    ${receiptItems}
+
+                  </tbody>
+
+                </table>
+
+              </div>
+
+
+              <div
+                style="
+                  border-top:2px solid #222;
+                  margin-top:20px;
+                  padding-top:15px;
+                  display:flex;
+                  justify-content:space-between;
+                  font-size:20px;
+                  font-weight:bold;
+                "
+              >
+
+                <span>
+                  Total Amount
+                </span>
+
+                <span>
+                  ₹${totalAmount.toFixed(2)}
+                </span>
+
+              </div>
+
+
+              <div
+                style="
+                  margin-top:20px;
+                  padding:12px;
+                  background:#fff3cd;
+                  color:#856404;
+                  border-radius:8px;
+                  text-align:center;
+                  font-weight:600;
+                "
+              >
+
+                💵 Payment will be collected through
+                Cash on Delivery.
+
+              </div>
 
             </div>
 
+
+            <!-- PRINT BUTTON -->
+
+            <button
+              class="checkout-btn"
+              onclick="printReceipt()"
+              style="margin-bottom:15px;"
+            >
+              🖨️ Print Receipt
+            </button>
+
+
+            <!-- TRACKING -->
 
             <h3>
               📦 Order Tracking
@@ -373,6 +569,13 @@ form.addEventListener("submit", async function (event) {
                 🍽️ Back to Menu
               </button>
 
+              <button
+                class="checkout-btn"
+                onclick="window.location.href='order.html'"
+              >
+                📦 My Orders
+              </button>
+
             </div>
 
 
@@ -415,7 +618,6 @@ form.addEventListener("submit", async function (event) {
 
     // Start automatic tracking
     startOrderTracking(orderId);
-
 
   } catch (error) {
 
@@ -483,75 +685,6 @@ function startOrderTracking(orderId) {
       let html = "";
 
 
-      statusSteps.forEach((step, index) => {
-
-        const currentIndex =
-          statusSteps.indexOf(status);
-
-        const stepIndex = index;
-
-
-        let background =
-          "#eeeeee";
-
-        let textColor =
-          "#777";
-
-
-        if (stepIndex <= currentIndex) {
-
-          background =
-            "#198754";
-
-          textColor =
-            "#ffffff";
-
-        }
-
-
-        if (status === "Cancelled") {
-
-          background =
-            "#dc3545";
-
-          textColor =
-            "#ffffff";
-
-        }
-
-
-        html += `
-
-          <div
-            style="
-              display:flex;
-              align-items:center;
-              gap:10px;
-              margin:8px 0;
-              padding:10px;
-              border-radius:8px;
-              background:${background};
-              color:${textColor};
-              font-weight:600;
-            "
-          >
-
-            <span>
-              ${stepIndex <= currentIndex ? "✓" : "○"}
-            </span>
-
-            <span>
-              ${step}
-            </span>
-
-          </div>
-
-        `;
-
-      });
-
-
-      // Cancelled order
       if (status === "Cancelled") {
 
         html = `
@@ -572,11 +705,57 @@ function startOrderTracking(orderId) {
 
         `;
 
+      } else {
+
+        const currentIndex =
+          statusSteps.indexOf(status);
+
+        statusSteps.forEach((step, index) => {
+
+          let background = "#eeeeee";
+          let textColor = "#777";
+
+          if (index <= currentIndex) {
+
+            background = "#198754";
+            textColor = "#ffffff";
+
+          }
+
+          html += `
+
+            <div
+              style="
+                display:flex;
+                align-items:center;
+                gap:10px;
+                margin:8px 0;
+                padding:10px;
+                border-radius:8px;
+                background:${background};
+                color:${textColor};
+                font-weight:600;
+              "
+            >
+
+              <span>
+                ${index <= currentIndex ? "✓" : "○"}
+              </span>
+
+              <span>
+                ${step}
+              </span>
+
+            </div>
+
+          `;
+
+        });
+
       }
 
 
       tracking.innerHTML = html;
-
 
     } catch (error) {
 
@@ -590,14 +769,126 @@ function startOrderTracking(orderId) {
   }
 
 
-  // First update
   updateTracking();
 
 
-  // Update every 5 seconds
   setInterval(
     updateTracking,
     5000
   );
+
+}
+
+
+// ===============================
+// PRINT RECEIPT
+// ===============================
+function printReceipt() {
+
+  const receipt =
+    document.getElementById("receipt");
+
+  if (!receipt) {
+    return;
+  }
+
+  const printWindow =
+    window.open(
+      "",
+      "_blank",
+      "width=800,height=900"
+    );
+
+  if (!printWindow) {
+
+    alert(
+      "Please allow pop-ups to print the receipt."
+    );
+
+    return;
+  }
+
+
+  printWindow.document.write(`
+
+    <!DOCTYPE html>
+
+    <html>
+
+    <head>
+
+      <title>
+        Thulir Unavagam - Order Receipt
+      </title>
+
+      <style>
+
+        body {
+          font-family: Arial, sans-serif;
+          padding: 30px;
+          color: #222;
+        }
+
+        table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+
+        th,
+        td {
+          padding: 10px;
+          border-bottom: 1px solid #ddd;
+        }
+
+        th {
+          background: #f5f5f5;
+        }
+
+        @media print {
+
+          body {
+            padding: 10px;
+          }
+
+        }
+
+      </style>
+
+    </head>
+
+    <body>
+
+      ${receipt.innerHTML}
+
+    </body>
+
+    </html>
+
+  `);
+
+  printWindow.document.close();
+
+  printWindow.focus();
+
+  setTimeout(() => {
+
+    printWindow.print();
+
+  }, 300);
+
+}
+
+
+// ===============================
+// ESCAPE HTML
+// ===============================
+function escapeHtml(value) {
+
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 
 }
