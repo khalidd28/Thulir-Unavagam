@@ -427,6 +427,91 @@ app.get(
 );
 
 // =================================
+// CUSTOMER - MY ORDERS
+// =================================
+// Customers can view their previous
+// orders using their phone number.
+// =================================
+
+app.get(
+  "/api/my-orders/:phone",
+  async (req, res) => {
+    try {
+
+      const phone =
+        String(req.params.phone || "").trim();
+
+      if (!phone) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Phone number is required."
+        });
+      }
+
+      const [orders] =
+        await db.query(
+          `
+          SELECT
+            id AS order_id,
+            customer_name,
+            phone,
+            address,
+            total_amount,
+            status,
+            created_at
+          FROM orders
+          WHERE phone = ?
+          ORDER BY created_at DESC
+          `,
+          [phone]
+        );
+
+      for (const order of orders) {
+
+        const [items] =
+          await db.query(
+            `
+            SELECT
+              oi.food_item_id,
+              f.name AS food_name,
+              oi.quantity,
+              oi.price AS unit_price
+            FROM order_items oi
+            JOIN food_items f
+              ON oi.food_item_id = f.id
+            WHERE oi.order_id = ?
+            `,
+            [order.order_id]
+          );
+
+        order.items = items;
+      }
+
+      res.json({
+        success: true,
+        phone,
+        total_orders: orders.length,
+        orders
+      });
+
+    } catch (error) {
+
+      console.error(
+        "MY ORDERS ERROR:",
+        error
+      );
+
+      res.status(500).json({
+        success: false,
+        message:
+          "Unable to load your orders."
+      });
+    }
+  }
+);
+
+// =================================
 // ADMIN - GET ORDERS
 // =================================
 
@@ -490,9 +575,8 @@ app.get(
 // =================================
 // ADMIN - SALES & ORDER ANALYTICS
 // =================================
-// IMPORTANT:
-// Sales are counted ONLY when status = Delivered
-// Cancelled and other pending statuses are NOT counted
+// Sales are counted ONLY when status
+// is Delivered.
 // =================================
 
 app.get(
@@ -501,16 +585,11 @@ app.get(
   async (req, res) => {
     try {
 
-      // -----------------------------
-      // SELECT DATE
-      // -----------------------------
-
       const selectedDate =
         req.query.date ||
         new Date()
           .toISOString()
           .split("T")[0];
-
 
       // -----------------------------
       // SELECTED DATE SUMMARY
@@ -532,7 +611,6 @@ app.get(
           `,
           [selectedDate]
         );
-
 
       // -----------------------------
       // BREAKFAST SALES
@@ -569,7 +647,6 @@ app.get(
           `,
           [selectedDate]
         );
-
 
       // -----------------------------
       // CATEGORY SALES
@@ -618,7 +695,6 @@ app.get(
           [selectedDate]
         );
 
-
       // -----------------------------
       // MONTHLY SALES
       // ONLY DELIVERED ORDERS
@@ -651,10 +727,9 @@ app.get(
           ]
         );
 
-
       // -----------------------------
       // DATE-WISE ORDERS
-      // ALL STATUSES ARE SHOWN
+      // ALL STATUSES
       // -----------------------------
 
       const [dateOrders] =
@@ -674,7 +749,6 @@ app.get(
           `,
           [selectedDate]
         );
-
 
       // -----------------------------
       // RESPONSE
