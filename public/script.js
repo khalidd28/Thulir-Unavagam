@@ -51,22 +51,37 @@ async function loadMenu() {
 
   try {
 
-    const response = await fetch("/api/menu");
+    const response =
+      await fetch("/api/menu");
 
     if (!response.ok) {
       throw new Error("Unable to load menu");
     }
 
-    menu = await response.json();
+    menu =
+      await response.json();
 
     renderMenu();
 
   } catch (error) {
 
-    console.error("MENU ERROR:", error);
+    console.error(
+      "MENU ERROR:",
+      error
+    );
 
-    document.getElementById("menuContainer").innerHTML =
-      "<p>Unable to load today's menu.</p>";
+    const container =
+      document.getElementById(
+        "menuContainer"
+      );
+
+    if (container) {
+
+      container.innerHTML =
+        "<p>Unable to load today's menu.</p>";
+
+    }
+
   }
 }
 
@@ -77,12 +92,15 @@ async function loadMenu() {
 
 function getFoodImage(foodName) {
 
-  const name = foodName
-    .toLowerCase()
-    .trim();
+  const name =
+    foodName
+      .toLowerCase()
+      .trim();
 
-  return foodImages[name] ||
-    "assets/food/idli.jpg";
+  return (
+    foodImages[name] ||
+    "assets/food/idli.jpg"
+  );
 }
 
 
@@ -93,7 +111,13 @@ function getFoodImage(foodName) {
 function renderMenu() {
 
   const container =
-    document.getElementById("menuContainer");
+    document.getElementById(
+      "menuContainer"
+    );
+
+  if (!container) {
+    return;
+  }
 
   if (!menu.length) {
 
@@ -103,7 +127,6 @@ function renderMenu() {
     return;
   }
 
-
   const categories = [
     "Breakfast",
     "Lunch",
@@ -111,78 +134,87 @@ function renderMenu() {
     "Tea & Snacks"
   ];
 
+  container.innerHTML =
+    categories
+      .map(category => {
 
-  container.innerHTML = categories.map(category => {
+        const items =
+          menu.filter(
+            item =>
+              item.meal_type === category
+          );
 
-    const items =
-      menu.filter(
-        item => item.meal_type === category
-      );
+        if (!items.length) {
+          return "";
+        }
 
+        return `
+          <div class="category">
 
-    if (!items.length) {
-      return "";
-    }
+            <h3>${category}</h3>
 
+            <div class="cards">
 
-    return `
-      <div class="category">
+              ${items
+                .map(item => {
 
-        <h3>${category}</h3>
+                  const image =
+                    getFoodImage(
+                      item.name
+                    );
 
-        <div class="cards">
+                  return `
 
-          ${items.map(item => {
+                    <div class="card">
 
-            const image =
-              getFoodImage(item.name);
+                      <img
+                        src="${image}"
+                        alt="${item.name}"
+                        class="food-image"
+                      >
 
-            return `
+                      <div class="card-content">
 
-              <div class="card">
+                        <h4>
+                          ${item.name}
+                        </h4>
 
-                <img
-                  src="${image}"
-                  alt="${item.name}"
-                  class="food-image"
-                >
+                        <p>
+                          ${
+                            item.description ||
+                            "Freshly prepared at Thulir Unavagam."
+                          }
+                        </p>
 
-                <div class="card-content">
+                        <div class="price">
+                          ₹${Number(
+                            item.price
+                          ).toFixed(0)}
+                        </div>
 
-                  <h4>${item.name}</h4>
+                        <button
+                          class="add"
+                          onclick="addToCart(${item.food_id})"
+                        >
+                          Add to Cart
+                        </button>
 
-                  <p>
-                    ${
-                      item.description ||
-                      "Freshly prepared at Thulir Unavagam."
-                    }
-                  </p>
+                      </div>
 
-                  <div class="price">
-                    ₹${Number(item.price).toFixed(0)}
-                  </div>
+                    </div>
 
-                  <button
-                    class="add"
-                    onclick="addToCart(${item.food_id})"
-                  >
-                    Add to Cart
-                  </button>
+                  `;
 
-                </div>
+                })
+                .join("")}
 
-              </div>
+            </div>
 
-            `;
+          </div>
+        `;
 
-          }).join("")}
-
-        </div>
-
-      </div>
-    `;
-
-  }).join("");
+      })
+      .join("");
 }
 
 
@@ -194,23 +226,24 @@ function addToCart(foodId) {
 
   const item =
     menu.find(
-      x => x.food_id === foodId
+      x =>
+        x.food_id === foodId
     );
-
 
   if (!item) {
 
-    alert("Food item not found.");
+    alert(
+      "Food item not found."
+    );
 
     return;
   }
 
-
   const existing =
     cart.find(
-      x => x.food_id === foodId
+      x =>
+        x.food_id === foodId
     );
-
 
   if (existing) {
 
@@ -220,26 +253,33 @@ function addToCart(foodId) {
 
     cart.push({
 
-      food_id: item.food_id,
+      food_id:
+        item.food_id,
 
-      name: item.name,
+      name:
+        item.name,
 
-      price: Number(item.price),
+      price:
+        Number(item.price),
 
-      qty: 1
+      qty:
+        1
 
     });
+
   }
 
-
   localStorage.setItem(
-  "thulirCart",
-  JSON.stringify(cart)
-);
+    "thulirCart",
+    JSON.stringify(cart)
+  );
 
-updateCartCount();
+  updateCartCount();
 
-alert(item.name + " added to cart");
+  alert(
+    item.name +
+    " added to cart"
+  );
 }
 
 
@@ -256,10 +296,17 @@ function updateCartCount() {
       0
     );
 
+  const cartCount =
+    document.getElementById(
+      "cartCount"
+    );
 
-  document.getElementById(
-    "cartCount"
-  ).textContent = count;
+  if (cartCount) {
+
+    cartCount.textContent =
+      count;
+
+  }
 }
 
 
@@ -274,6 +321,9 @@ function showCart() {
       "checkoutContainer"
     );
 
+  if (!checkoutContainer) {
+    return;
+  }
 
   if (!cart.length) {
 
@@ -292,7 +342,6 @@ function showCart() {
     return;
   }
 
-
   const total =
     cart.reduce(
       (sum, item) =>
@@ -302,30 +351,32 @@ function showCart() {
       0
     );
 
-
   const cartItems =
-    cart.map(item => `
+    cart
+      .map(
+        item => `
 
-      <div class="checkout-item">
+          <div class="checkout-item">
 
-        <strong>
-          ${item.name}
-        </strong>
+            <strong>
+              ${item.name}
+            </strong>
 
-        <span>
-          ${item.qty}
-          × ₹${item.price.toFixed(0)}
-          =
-          ₹${(
-            item.price *
-            item.qty
-          ).toFixed(0)}
-        </span>
+            <span>
+              ${item.qty}
+              × ₹${item.price.toFixed(0)}
+              =
+              ₹${(
+                item.price *
+                item.qty
+              ).toFixed(0)}
+            </span>
 
-      </div>
+          </div>
 
-    `).join("");
-
+        `
+      )
+      .join("");
 
   checkoutContainer.innerHTML = `
 
@@ -359,7 +410,6 @@ function showCart() {
           placeholder="Enter your name"
         >
 
-
         <label>
           Phone Number
         </label>
@@ -370,7 +420,6 @@ function showCart() {
           required
           placeholder="Enter your phone number"
         >
-
 
         <label>
           Delivery Address
@@ -383,7 +432,6 @@ function showCart() {
           rows="4"
         ></textarea>
 
-
         <button
           type="submit"
           class="checkout-btn"
@@ -393,16 +441,16 @@ function showCart() {
 
       </form>
 
-
       <p id="orderMessage"></p>
 
     </div>
 
   `;
 
-
   document
-    .getElementById("checkoutForm")
+    .getElementById(
+      "checkoutForm"
+    )
     .addEventListener(
       "submit",
       placeOrder
@@ -418,33 +466,34 @@ async function placeOrder(event) {
 
   event.preventDefault();
 
-
   const customerName =
     document
-      .getElementById("customerName")
+      .getElementById(
+        "customerName"
+      )
       .value
       .trim();
-
 
   const customerPhone =
     document
-      .getElementById("customerPhone")
+      .getElementById(
+        "customerPhone"
+      )
       .value
       .trim();
-
 
   const customerAddress =
     document
-      .getElementById("customerAddress")
+      .getElementById(
+        "customerAddress"
+      )
       .value
       .trim();
-
 
   const message =
     document.getElementById(
       "orderMessage"
     );
-
 
   if (
     !customerName ||
@@ -458,24 +507,23 @@ async function placeOrder(event) {
     return;
   }
 
-
   const items =
-    cart.map(item => ({
+    cart.map(
+      item => ({
 
-      food_id:
-        item.food_id,
+        food_id:
+          item.food_id,
 
-      quantity:
-        item.qty
+        quantity:
+          item.qty
 
-    }));
-
+      })
+    );
 
   try {
 
     message.textContent =
       "Placing your order...";
-
 
     const response =
       await fetch(
@@ -507,10 +555,8 @@ async function placeOrder(event) {
         }
       );
 
-
     const data =
       await response.json();
-
 
     if (!response.ok) {
 
@@ -518,8 +564,8 @@ async function placeOrder(event) {
         data.message ||
         "Unable to place order."
       );
-    }
 
+    }
 
     message.innerHTML = `
 
@@ -541,8 +587,12 @@ async function placeOrder(event) {
 
     `;
 
-
     cart = [];
+
+    localStorage.setItem(
+      "thulirCart",
+      JSON.stringify(cart)
+    );
 
     updateCartCount();
 
@@ -551,7 +601,6 @@ async function placeOrder(event) {
         "checkoutForm"
       )
       .reset();
-
 
   } catch (error) {
 
@@ -563,6 +612,7 @@ async function placeOrder(event) {
     message.textContent =
       error.message ||
       "Unable to place order.";
+
   }
 }
 
@@ -573,20 +623,22 @@ async function placeOrder(event) {
 
 async function trackOrder() {
 
-  const orderId =
-    document
-      .getElementById(
-        "trackingOrderId"
-      )
-      .value
-      .trim();
-
+  const input =
+    document.getElementById(
+      "trackingOrderId"
+    );
 
   const result =
     document.getElementById(
       "trackingResult"
     );
 
+  if (!input || !result) {
+    return;
+  }
+
+  const orderId =
+    input.value.trim();
 
   if (!orderId) {
 
@@ -596,19 +648,17 @@ async function trackOrder() {
     return;
   }
 
-
   if (trackingInterval) {
 
     clearInterval(
       trackingInterval
     );
-  }
 
+  }
 
   await fetchOrderStatus(
     orderId
   );
-
 
   trackingInterval =
     setInterval(
@@ -637,6 +687,9 @@ async function fetchOrderStatus(
       "trackingResult"
     );
 
+  if (!result) {
+    return;
+  }
 
   try {
 
@@ -645,10 +698,8 @@ async function fetchOrderStatus(
         `/api/orders/${orderId}`
       );
 
-
     const data =
       await response.json();
-
 
     if (!response.ok) {
 
@@ -656,15 +707,35 @@ async function fetchOrderStatus(
         data.message ||
         "Order not found."
       );
+
     }
 
 
-    const order =
-      data.order;
+    // ======================================
+    // SUPPORT BOTH API RESPONSE FORMATS
+    // ======================================
 
+    const order =
+      data.order ||
+      data;
 
     const items =
-      data.items;
+      data.items ||
+      [];
+
+
+    // Make sure an order exists
+
+    if (
+      !order ||
+      !order.status
+    ) {
+
+      throw new Error(
+        "Order information is unavailable."
+      );
+
+    }
 
 
     const statuses = [
@@ -687,7 +758,9 @@ async function fetchOrderStatus(
     let statusHTML = "";
 
 
+    // ======================================
     // CANCELLED ORDER
+    // ======================================
 
     if (
       order.status ===
@@ -699,15 +772,17 @@ async function fetchOrderStatus(
         <div class="tracking-card">
 
           <h3>
-            Order #${order.order_id}
+            Order #${order.order_id || order.id}
           </h3>
 
           <p>
+
             <strong>
               Status:
             </strong>
 
             Cancelled ❌
+
           </p>
 
           <p>
@@ -721,7 +796,9 @@ async function fetchOrderStatus(
     }
 
 
+    // ======================================
     // NORMAL ORDER
+    // ======================================
 
     else {
 
@@ -731,65 +808,75 @@ async function fetchOrderStatus(
         );
 
 
+      const safeIndex =
+        currentIndex >= 0
+          ? currentIndex
+          : 0;
+
+
       const trackerHTML =
-        statuses.map(
-          (status, index) => {
+        statuses
+          .map(
+            (status, index) => {
 
-            let className = "";
-
-
-            if (
-              index <
-              currentIndex
-            ) {
-
-              className =
-                "completed";
-            }
+              let className =
+                "";
 
 
-            if (
-              index ===
-              currentIndex
-            ) {
+              if (
+                index <
+                safeIndex
+              ) {
 
-              className =
-                "current completed";
-            }
+                className =
+                  "completed";
+
+              }
 
 
-            return `
+              if (
+                index ===
+                safeIndex
+              ) {
 
-              <div
-                class="status-step ${className}"
-              >
+                className =
+                  "current completed";
+
+              }
+
+
+              return `
 
                 <div
-                  class="status-circle"
+                  class="status-step ${className}"
                 >
 
-                  ${
-                    index <=
-                    currentIndex
-                      ? "✓"
-                      : index + 1
-                  }
+                  <div
+                    class="status-circle"
+                  >
+
+                    ${
+                      index <=
+                      safeIndex
+                        ? "✓"
+                        : index + 1
+                    }
+
+                  </div>
+
+                  <div
+                    class="status-name"
+                  >
+                    ${status}
+                  </div>
 
                 </div>
 
+              `;
 
-                <div
-                  class="status-name"
-                >
-                  ${status}
-                </div>
-
-              </div>
-
-            `;
-
-          }
-        ).join("");
+            }
+          )
+          .join("");
 
 
       statusHTML = `
@@ -797,7 +884,7 @@ async function fetchOrderStatus(
         <div class="tracking-card">
 
           <h3>
-            Order #${order.order_id}
+            Order #${order.order_id || order.id}
           </h3>
 
 
@@ -849,28 +936,40 @@ async function fetchOrderStatus(
 
 
           ${
-            items.map(item => `
+            items.length
+              ? items
+                  .map(
+                    item => `
 
-              <p>
+                      <p>
 
-                ${item.food_name}
+                        ${
+                          item.food_name ||
+                          item.name ||
+                          "Food Item"
+                        }
 
-                ×
+                        ×
 
-                ${item.quantity}
+                        ${item.quantity}
 
-                =
+                        =
 
-                ₹${(
-                  Number(
-                    item.unit_price
-                  ) *
-                  item.quantity
-                ).toFixed(0)}
+                        ₹${(
+                          Number(
+                            item.unit_price ||
+                            item.price ||
+                            0
+                          ) *
+                          item.quantity
+                        ).toFixed(0)}
 
-              </p>
+                      </p>
 
-            `).join("")
+                    `
+                  )
+                  .join("")
+              : "<p>Order items unavailable.</p>"
           }
 
 
@@ -879,7 +978,7 @@ async function fetchOrderStatus(
             Total:
 
             ₹${Number(
-              order.total_amount
+              order.total_amount || 0
             ).toFixed(0)}
 
           </h3>
@@ -887,6 +986,7 @@ async function fetchOrderStatus(
         </div>
 
       `;
+
     }
 
 
@@ -901,7 +1001,6 @@ async function fetchOrderStatus(
       error
     );
 
-
     result.innerHTML = `
 
       <div class="tracking-card">
@@ -913,6 +1012,7 @@ async function fetchOrderStatus(
       </div>
 
     `;
+
   }
 }
 
@@ -924,12 +1024,14 @@ async function fetchOrderStatus(
 const today =
   new Date();
 
-
-document
-  .getElementById(
+const todayDate =
+  document.getElementById(
     "todayDate"
-  )
-  .textContent =
+  );
+
+if (todayDate) {
+
+  todayDate.textContent =
     today.toLocaleDateString(
       "en-IN",
       {
@@ -938,6 +1040,15 @@ document
         year: "numeric"
       }
     );
+
+}
+
+
+// ==========================================
+// UPDATE CART COUNT ON START
+// ==========================================
+
+updateCartCount();
 
 
 // ==========================================
