@@ -19,58 +19,1288 @@
     href="style.css"
   >
 
+  <style>
+
+    /* =====================================================
+       THULIR UNAVAGAM - PREMIUM HOMEPAGE DESIGN
+       This styling does NOT change JavaScript functionality.
+       ===================================================== */
+
+    :root {
+      --tu-green: #174d08;
+      --tu-green-light: #2d7a18;
+      --tu-dark: #102b08;
+      --tu-cream: #fffaf0;
+      --tu-gold: #e5a72c;
+      --tu-text: #26332a;
+      --tu-muted: #6b756d;
+      --tu-white: #ffffff;
+      --tu-shadow: 0 15px 40px rgba(23, 77, 8, 0.10);
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background:
+        linear-gradient(
+          180deg,
+          #fffdf7 0%,
+          #f7fbf4 45%,
+          #ffffff 100%
+        );
+      color: var(--tu-text);
+    }
+
+
+    /* =====================================================
+       NAVBAR
+       ===================================================== */
+
+    .tu-navbar {
+      position: sticky;
+      top: 0;
+      z-index: 999;
+
+      background: rgba(255, 255, 255, 0.94);
+
+      backdrop-filter: blur(14px);
+
+      border-bottom:
+        1px solid rgba(23, 77, 8, 0.10);
+
+      box-shadow:
+        0 5px 25px rgba(0, 0, 0, 0.05);
+
+      padding: 12px 5%;
+    }
+
+    .tu-navbar-inner {
+      max-width: 1250px;
+      margin: auto;
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      gap: 25px;
+    }
+
+    .tu-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .tu-brand img {
+      width: 58px;
+      height: 58px;
+
+      object-fit: cover;
+
+      border-radius: 50%;
+
+      border: 3px solid var(--tu-green);
+
+      box-shadow:
+        0 5px 15px rgba(23, 77, 8, 0.15);
+    }
+
+    .tu-brand-text h1 {
+      margin: 0;
+
+      font-size: 21px;
+
+      color: var(--tu-green);
+
+      font-weight: 800;
+    }
+
+    .tu-brand-text p {
+      margin: 3px 0 0;
+
+      color: var(--tu-muted);
+
+      font-size: 12px;
+    }
+
+    .tu-nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .tu-nav-link {
+      text-decoration: none;
+
+      color: var(--tu-text);
+
+      font-weight: 600;
+
+      padding: 10px 14px;
+
+      border-radius: 9px;
+
+      transition: 0.25s;
+    }
+
+    .tu-nav-link:hover {
+      color: var(--tu-green);
+
+      background: #f0f7ed;
+    }
+
+    .tu-cart-btn {
+      text-decoration: none;
+
+      background: var(--tu-green);
+
+      color: white !important;
+
+      padding: 11px 17px;
+
+      border-radius: 10px;
+
+      font-weight: 700;
+
+      box-shadow:
+        0 7px 18px rgba(23, 77, 8, 0.20);
+
+      transition: 0.25s;
+    }
+
+    .tu-cart-btn:hover {
+      background: var(--tu-green-light);
+
+      transform: translateY(-2px);
+    }
+
+    #cartCount {
+      display: inline-flex;
+
+      align-items: center;
+      justify-content: center;
+
+      min-width: 22px;
+      height: 22px;
+
+      margin-left: 5px;
+
+      padding: 0 5px;
+
+      border-radius: 50px;
+
+      background: white;
+
+      color: var(--tu-green);
+
+      font-size: 12px;
+
+      font-weight: 800;
+    }
+
+
+    /* =====================================================
+       HERO
+       ===================================================== */
+
+    .tu-hero {
+      max-width: 1250px;
+
+      margin: 35px auto 20px;
+
+      padding: 0 5%;
+    }
+
+    .tu-hero-box {
+      min-height: 470px;
+
+      display: grid;
+
+      grid-template-columns:
+        1.05fr
+        0.95fr;
+
+      align-items: center;
+
+      overflow: hidden;
+
+      border-radius: 30px;
+
+      background:
+        linear-gradient(
+          135deg,
+          #174d08 0%,
+          #236c10 60%,
+          #2f8019 100%
+        );
+
+      box-shadow:
+        0 25px 60px rgba(23, 77, 8, 0.20);
+
+      position: relative;
+    }
+
+    .tu-hero-box::before {
+      content: "";
+
+      position: absolute;
+
+      width: 300px;
+      height: 300px;
+
+      right: 40%;
+      top: -150px;
+
+      border-radius: 50%;
+
+      background:
+        rgba(255, 255, 255, 0.07);
+    }
+
+    .tu-hero-content {
+      position: relative;
+      z-index: 2;
+
+      padding: 55px;
+    }
+
+    .tu-hero-badge {
+      display: inline-flex;
+
+      align-items: center;
+
+      gap: 8px;
+
+      padding: 8px 13px;
+
+      border-radius: 50px;
+
+      background:
+        rgba(255, 255, 255, 0.13);
+
+      border:
+        1px solid rgba(255, 255, 255, 0.18);
+
+      color: #fff4d5;
+
+      font-size: 12px;
+
+      font-weight: 800;
+
+      letter-spacing: 1px;
+    }
+
+    .tu-hero h2 {
+      margin: 18px 0 12px;
+
+      color: white;
+
+      font-size: clamp(38px, 5vw, 65px);
+
+      line-height: 1.05;
+
+      letter-spacing: -2px;
+    }
+
+    .tu-hero h2 span {
+      color: #ffd66b;
+    }
+
+    .tu-hero-description {
+      max-width: 520px;
+
+      color: rgba(255, 255, 255, 0.86);
+
+      font-size: 17px;
+
+      line-height: 1.7;
+
+      margin-bottom: 28px;
+    }
+
+    .tu-hero-buttons {
+      display: flex;
+
+      gap: 12px;
+
+      flex-wrap: wrap;
+    }
+
+    .tu-primary-btn {
+      display: inline-flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      gap: 8px;
+
+      padding: 13px 20px;
+
+      border-radius: 11px;
+
+      background: white;
+
+      color: var(--tu-green);
+
+      text-decoration: none;
+
+      font-weight: 800;
+
+      transition: 0.25s;
+    }
+
+    .tu-primary-btn:hover {
+      transform: translateY(-3px);
+
+      box-shadow:
+        0 10px 25px rgba(0, 0, 0, 0.18);
+    }
+
+    .tu-secondary-btn {
+      display: inline-flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      padding: 13px 20px;
+
+      border-radius: 11px;
+
+      border:
+        1px solid rgba(255, 255, 255, 0.30);
+
+      color: white;
+
+      text-decoration: none;
+
+      font-weight: 700;
+
+      background:
+        rgba(255, 255, 255, 0.08);
+
+      transition: 0.25s;
+    }
+
+    .tu-secondary-btn:hover {
+      background:
+        rgba(255, 255, 255, 0.16);
+    }
+
+    .tu-hero-image {
+      width: 100%;
+      height: 100%;
+
+      min-height: 470px;
+
+      object-fit: cover;
+
+      display: block;
+
+      filter: saturate(1.08);
+    }
+
+
+    /* =====================================================
+       HIGHLIGHTS
+       ===================================================== */
+
+    .tu-highlights {
+      max-width: 1150px;
+
+      margin: 35px auto 15px;
+
+      padding: 0 5%;
+
+      display: grid;
+
+      grid-template-columns:
+        repeat(4, 1fr);
+
+      gap: 15px;
+    }
+
+    .tu-highlight {
+      background: white;
+
+      border:
+        1px solid #e9eee6;
+
+      border-radius: 16px;
+
+      padding: 18px;
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 13px;
+
+      box-shadow:
+        0 8px 25px rgba(0, 0, 0, 0.04);
+
+      transition: 0.25s;
+    }
+
+    .tu-highlight:hover {
+      transform: translateY(-4px);
+
+      box-shadow:
+        0 14px 30px rgba(23, 77, 8, 0.10);
+    }
+
+    .tu-highlight-icon {
+      width: 45px;
+      height: 45px;
+
+      flex-shrink: 0;
+
+      display: flex;
+
+      align-items: center;
+      justify-content: center;
+
+      border-radius: 12px;
+
+      background: #eef7e9;
+
+      font-size: 22px;
+    }
+
+    .tu-highlight strong {
+      display: block;
+
+      color: var(--tu-green);
+
+      font-size: 14px;
+    }
+
+    .tu-highlight span {
+      display: block;
+
+      margin-top: 3px;
+
+      color: var(--tu-muted);
+
+      font-size: 12px;
+    }
+
+
+    /* =====================================================
+       MENU HEADER
+       ===================================================== */
+
+    .tu-menu-section {
+      max-width: 1250px;
+
+      margin: 75px auto 0;
+
+      padding: 0 5%;
+    }
+
+    .tu-menu-heading {
+      text-align: center;
+
+      margin-bottom: 35px;
+    }
+
+    .tu-eyebrow {
+      margin: 0 0 8px;
+
+      color: var(--tu-green);
+
+      font-size: 12px;
+
+      font-weight: 900;
+
+      letter-spacing: 2px;
+    }
+
+    .tu-menu-heading h2 {
+      margin: 0;
+
+      color: var(--tu-dark);
+
+      font-size: clamp(30px, 4vw, 44px);
+
+      letter-spacing: -1px;
+    }
+
+    .tu-menu-date {
+      margin: 8px 0;
+
+      color: var(--tu-green-light);
+
+      font-size: 17px;
+
+      font-weight: 700;
+    }
+
+    .tu-menu-heading p:last-child {
+      margin: 7px 0 0;
+
+      color: var(--tu-muted);
+    }
+
+
+    /* =====================================================
+       DYNAMIC MENU - MATCHES EXISTING SCRIPT.JS
+       ===================================================== */
+
+    #menuContainer {
+      width: 100%;
+    }
+
+    #menuContainer .category {
+      margin-bottom: 55px;
+    }
+
+    #menuContainer .category > h3 {
+      display: flex;
+
+      align-items: center;
+
+      gap: 15px;
+
+      margin: 0 0 22px;
+
+      color: var(--tu-dark);
+
+      font-size: 25px;
+    }
+
+    #menuContainer .category > h3::after {
+      content: "";
+
+      height: 2px;
+
+      flex: 1;
+
+      background:
+        linear-gradient(
+          90deg,
+          #dce8d8,
+          transparent
+        );
+    }
+
+    #menuContainer .cards {
+      display: grid;
+
+      grid-template-columns:
+        repeat(
+          auto-fit,
+          minmax(230px, 1fr)
+        );
+
+      gap: 22px;
+    }
+
+    #menuContainer .card {
+      overflow: hidden;
+
+      background: white;
+
+      border:
+        1px solid #e8eee5;
+
+      border-radius: 19px;
+
+      box-shadow:
+        0 8px 28px rgba(0, 0, 0, 0.06);
+
+      transition:
+        transform 0.28s ease,
+        box-shadow 0.28s ease;
+
+      display: flex;
+
+      flex-direction: column;
+    }
+
+    #menuContainer .card:hover {
+      transform: translateY(-8px);
+
+      box-shadow:
+        0 18px 40px rgba(23, 77, 8, 0.13);
+    }
+
+    #menuContainer .food-image {
+      width: 100%;
+
+      height: 205px;
+
+      object-fit: cover;
+
+      display: block;
+
+      transition:
+        transform 0.4s ease;
+    }
+
+    #menuContainer .card:hover .food-image {
+      transform: scale(1.04);
+    }
+
+    #menuContainer .card-content {
+      padding: 18px;
+
+      display: flex;
+
+      flex-direction: column;
+
+      flex: 1;
+    }
+
+    #menuContainer .card-content h4 {
+      margin: 0 0 7px;
+
+      color: var(--tu-dark);
+
+      font-size: 20px;
+    }
+
+    #menuContainer .card-content p {
+      color: var(--tu-muted);
+
+      font-size: 13px;
+
+      line-height: 1.55;
+
+      margin: 0 0 13px;
+
+      min-height: 40px;
+    }
+
+    #menuContainer .price {
+      color: var(--tu-green);
+
+      font-size: 21px;
+
+      font-weight: 900;
+
+      margin-top: auto;
+
+      margin-bottom: 13px;
+    }
+
+    #menuContainer .add {
+      width: 100%;
+
+      border: none;
+
+      padding: 11px 15px;
+
+      border-radius: 10px;
+
+      background: var(--tu-green);
+
+      color: white;
+
+      font-weight: 800;
+
+      cursor: pointer;
+
+      transition: 0.25s;
+    }
+
+    #menuContainer .add:hover {
+      background: var(--tu-green-light);
+
+      transform: translateY(-2px);
+    }
+
+
+    /* =====================================================
+       TRACK ORDER
+       ===================================================== */
+
+    .tu-tracking-section {
+      max-width: 1100px;
+
+      margin: 65px auto;
+
+      padding: 0 5%;
+    }
+
+    .tu-tracking-box {
+      background:
+        linear-gradient(
+          135deg,
+          #f0f8ec,
+          #ffffff
+        );
+
+      border:
+        1px solid #dcebd6;
+
+      border-radius: 24px;
+
+      padding: 38px;
+
+      text-align: center;
+
+      box-shadow:
+        var(--tu-shadow);
+    }
+
+    .tu-tracking-box h2 {
+      margin: 0;
+
+      color: var(--tu-dark);
+
+      font-size: 32px;
+    }
+
+    .tu-tracking-description {
+      color: var(--tu-muted);
+
+      margin: 8px 0 25px;
+    }
+
+    .tu-tracking-form {
+      max-width: 600px;
+
+      margin: auto;
+
+      display: flex;
+
+      gap: 10px;
+    }
+
+    .tu-tracking-form input {
+      flex: 1;
+
+      min-width: 0;
+
+      padding: 14px 16px;
+
+      border:
+        1px solid #ccd9c8;
+
+      border-radius: 10px;
+
+      outline: none;
+
+      font-size: 15px;
+
+      background: white;
+    }
+
+    .tu-tracking-form input:focus {
+      border-color: var(--tu-green);
+
+      box-shadow:
+        0 0 0 3px rgba(23, 77, 8, 0.08);
+    }
+
+    .tu-track-btn {
+      border: none;
+
+      background: var(--tu-green);
+
+      color: white;
+
+      border-radius: 10px;
+
+      padding: 13px 20px;
+
+      font-weight: 800;
+
+      cursor: pointer;
+
+      transition: 0.25s;
+    }
+
+    .tu-track-btn:hover {
+      background: var(--tu-green-light);
+
+      transform: translateY(-2px);
+    }
+
+    #trackingResult {
+      margin-top: 25px;
+    }
+
+
+    /* Existing tracking generated by script.js */
+
+    #trackingResult .tracking-card {
+      background: white;
+
+      border:
+        1px solid #e4ebe1;
+
+      border-radius: 18px;
+
+      padding: 25px;
+
+      text-align: left;
+
+      box-shadow:
+        0 10px 30px rgba(0, 0, 0, 0.06);
+    }
+
+    #trackingResult .tracking-card h3 {
+      color: var(--tu-green);
+    }
+
+    #trackingResult .order-status-tracker {
+      display: flex;
+
+      align-items: flex-start;
+
+      justify-content: space-between;
+
+      gap: 5px;
+
+      margin: 30px 0;
+
+      overflow-x: auto;
+
+      padding-bottom: 8px;
+    }
+
+    #trackingResult .status-step {
+      flex: 1;
+
+      min-width: 90px;
+
+      text-align: center;
+
+      position: relative;
+    }
+
+    #trackingResult .status-circle {
+      width: 36px;
+      height: 36px;
+
+      margin: auto;
+
+      display: flex;
+
+      align-items: center;
+      justify-content: center;
+
+      border-radius: 50%;
+
+      background: #e8eee6;
+
+      color: #6c776c;
+
+      font-size: 13px;
+
+      font-weight: 800;
+    }
+
+    #trackingResult .status-step.completed .status-circle {
+      background: var(--tu-green);
+
+      color: white;
+    }
+
+    #trackingResult .status-name {
+      margin-top: 8px;
+
+      font-size: 11px;
+
+      color: #69736b;
+    }
+
+    #trackingResult .status-step.completed .status-name {
+      color: var(--tu-green);
+
+      font-weight: 700;
+    }
+
+
+    /* =====================================================
+       HOW TO ORDER
+       ===================================================== */
+
+    .tu-how-section {
+      max-width: 1150px;
+
+      margin: 75px auto;
+
+      padding: 0 5%;
+    }
+
+    .tu-how-heading {
+      text-align: center;
+
+      margin-bottom: 30px;
+    }
+
+    .tu-how-heading h2 {
+      margin: 0;
+
+      color: var(--tu-dark);
+
+      font-size: 35px;
+    }
+
+    .tu-how-heading p {
+      color: var(--tu-muted);
+    }
+
+    .tu-steps {
+      display: grid;
+
+      grid-template-columns:
+        repeat(4, 1fr);
+
+      gap: 18px;
+    }
+
+    .tu-step {
+      background: white;
+
+      border:
+        1px solid #e6ece3;
+
+      border-radius: 18px;
+
+      padding: 25px 18px;
+
+      text-align: center;
+
+      box-shadow:
+        0 8px 25px rgba(0, 0, 0, 0.04);
+
+      transition: 0.25s;
+    }
+
+    .tu-step:hover {
+      transform: translateY(-5px);
+
+      border-color: #cfe1c8;
+    }
+
+    .tu-step-number {
+      width: 48px;
+      height: 48px;
+
+      margin: auto auto 15px;
+
+      display: flex;
+
+      align-items: center;
+      justify-content: center;
+
+      border-radius: 50%;
+
+      background: var(--tu-green);
+
+      color: white;
+
+      font-size: 18px;
+
+      font-weight: 900;
+    }
+
+    .tu-step strong {
+      display: block;
+
+      color: var(--tu-dark);
+
+      margin-bottom: 5px;
+    }
+
+    .tu-step span {
+      color: var(--tu-muted);
+
+      font-size: 13px;
+    }
+
+
+    /* =====================================================
+       FOOTER
+       ===================================================== */
+
+    .tu-footer {
+      margin-top: 80px;
+
+      background: var(--tu-dark);
+
+      color: white;
+
+      padding: 45px 5% 25px;
+
+      text-align: center;
+    }
+
+    .tu-footer-logo {
+      width: 65px;
+      height: 65px;
+
+      object-fit: cover;
+
+      border-radius: 50%;
+
+      border: 3px solid white;
+
+      margin-bottom: 10px;
+    }
+
+    .tu-footer h3 {
+      margin: 5px 0;
+
+      font-size: 22px;
+    }
+
+    .tu-footer p {
+      margin: 7px 0;
+
+      color: rgba(255, 255, 255, 0.68);
+
+      font-size: 13px;
+    }
+
+    .tu-footer-divider {
+      max-width: 500px;
+
+      height: 1px;
+
+      margin: 25px auto;
+
+      background:
+        rgba(255, 255, 255, 0.12);
+    }
+
+
+    /* =====================================================
+       MOBILE
+       ===================================================== */
+
+    @media (max-width: 900px) {
+
+      .tu-hero-box {
+        grid-template-columns: 1fr;
+      }
+
+      .tu-hero-content {
+        padding: 40px 30px;
+      }
+
+      .tu-hero-image {
+        min-height: 300px;
+
+        max-height: 350px;
+      }
+
+      .tu-highlights {
+        grid-template-columns:
+          repeat(2, 1fr);
+      }
+
+      .tu-steps {
+        grid-template-columns:
+          repeat(2, 1fr);
+      }
+
+    }
+
+
+    @media (max-width: 650px) {
+
+      .tu-navbar {
+        padding: 10px 4%;
+      }
+
+      .tu-navbar-inner {
+        gap: 8px;
+      }
+
+      .tu-brand img {
+        width: 47px;
+        height: 47px;
+      }
+
+      .tu-brand-text h1 {
+        font-size: 17px;
+      }
+
+      .tu-brand-text p {
+        display: none;
+      }
+
+      .tu-nav-link {
+        display: none;
+      }
+
+      .tu-cart-btn {
+        padding: 9px 12px;
+
+        font-size: 13px;
+      }
+
+      .tu-hero {
+        margin-top: 18px;
+
+        padding: 0 4%;
+      }
+
+      .tu-hero-box {
+        border-radius: 22px;
+      }
+
+      .tu-hero-content {
+        padding: 35px 24px;
+      }
+
+      .tu-hero h2 {
+        font-size: 40px;
+      }
+
+      .tu-hero-description {
+        font-size: 14px;
+      }
+
+      .tu-hero-image {
+        min-height: 230px;
+      }
+
+      .tu-highlights {
+        padding: 0 4%;
+
+        grid-template-columns: 1fr 1fr;
+
+        gap: 10px;
+      }
+
+      .tu-highlight {
+        padding: 13px;
+
+        gap: 8px;
+      }
+
+      .tu-highlight-icon {
+        width: 38px;
+        height: 38px;
+
+        font-size: 18px;
+      }
+
+      .tu-highlight strong {
+        font-size: 12px;
+      }
+
+      .tu-highlight span {
+        font-size: 10px;
+      }
+
+      .tu-menu-section {
+        margin-top: 55px;
+
+        padding: 0 4%;
+      }
+
+      #menuContainer .cards {
+        grid-template-columns: 1fr;
+      }
+
+      #menuContainer .food-image {
+        height: 220px;
+      }
+
+      .tu-tracking-section {
+        padding: 0 4%;
+      }
+
+      .tu-tracking-box {
+        padding: 25px 17px;
+      }
+
+      .tu-tracking-form {
+        flex-direction: column;
+      }
+
+      .tu-track-btn {
+        width: 100%;
+      }
+
+      .tu-steps {
+        grid-template-columns: 1fr;
+      }
+
+      .tu-how-section {
+        padding: 0 4%;
+      }
+
+      #trackingResult .order-status-tracker {
+        justify-content: flex-start;
+      }
+
+    }
+
+  </style>
+
 </head>
 
 
 <body>
 
 
-  <!-- NAVBAR -->
+  <!-- =====================================================
+       NAVBAR
+       ===================================================== -->
 
-  <header class="navbar">
+  <header class="tu-navbar">
 
-    <div class="brand">
+    <div class="tu-navbar-inner">
 
-      <img
-        src="assets/logo.jpeg"
-        alt="Thulir Unavagam Logo"
-      >
+      <div class="tu-brand">
 
-      <div>
+        <img
+          src="assets/logo.jpeg"
+          alt="Thulir Unavagam Logo"
+        >
 
-        <h1>
-          Thulir Unavagam
-        </h1>
+        <div class="tu-brand-text">
 
-        <p>
-          Fresh food, every day
-        </p>
+          <h1>
+            Thulir Unavagam
+          </h1>
+
+          <p>
+            Fresh food, every day
+          </p>
+
+        </div>
 
       </div>
 
-    </div>
 
+      <nav class="tu-nav-actions">
 
-    <div class="nav-actions">
+        <a
+          href="#menu"
+          class="tu-nav-link"
+        >
+          🍽️ Menu
+        </a>
 
-      <a href="#menu">
-        Menu
-      </a>
+        <a
+          href="#tracking"
+          class="tu-nav-link"
+        >
+          📦 Track Order
+        </a>
 
-      <a href="#tracking">
-        Track Order
-      </a>
+        <a
+          href="cart.html"
+          class="tu-cart-btn"
+        >
+          🛒 Cart
+          <span id="cartCount">0</span>
+        </a>
 
-
-      <!-- CART NOW OPENS SEPARATE PAGE -->
-
-      <a
-        href="cart.html"
-        class="cart-btn"
-      >
-        🛒 Cart
-        <span id="cartCount">0</span>
-      </a>
+      </nav>
 
     </div>
 
@@ -78,63 +1308,181 @@
 
 
 
-  <!-- MAIN CONTENT -->
+  <!-- =====================================================
+       MAIN
+       ===================================================== -->
 
   <main>
 
 
-    <!-- HERO SECTION -->
+    <!-- =====================================================
+         HERO
+         ===================================================== -->
 
-    <section class="hero">
+    <section class="tu-hero">
 
-      <div>
+      <div class="tu-hero-box">
 
-        <p class="eyebrow">
-          WELCOME TO
-        </p>
+        <div class="tu-hero-content">
 
-        <h2>
-          Thulir Unavagam
-        </h2>
+          <div class="tu-hero-badge">
+            🌱 FRESH • HOMEMADE • DELICIOUS
+          </div>
 
-        <p>
-          Breakfast, lunch, dinner, tea and snacks —
-          freshly prepared for you.
-        </p>
+          <h2>
+            Good Food.
+            <br>
+            <span>Good Mood.</span>
+          </h2>
 
-        <a
-          href="#menu"
-          class="primary-btn"
+          <p class="tu-hero-description">
+            Welcome to Thulir Unavagam — your place for
+            freshly prepared breakfast, lunch, dinner,
+            tea and snacks. Order your favourite food
+            with just a few clicks.
+          </p>
+
+          <div class="tu-hero-buttons">
+
+            <a
+              href="#menu"
+              class="tu-primary-btn"
+            >
+              🍽️ Explore Today's Menu
+            </a>
+
+            <a
+              href="#tracking"
+              class="tu-secondary-btn"
+            >
+              📦 Track My Order
+            </a>
+
+          </div>
+
+        </div>
+
+
+        <img
+          src="assets/menu-banner.jpeg"
+          alt="Thulir Unavagam Food"
+          class="tu-hero-image"
         >
-          🍽️ View Today's Menu
-        </a>
 
       </div>
-
-
-      <img
-        src="assets/menu-banner.jpeg"
-        alt="Thulir Unavagam Food Categories"
-      >
 
     </section>
 
 
 
-    <!-- MENU SECTION -->
+    <!-- =====================================================
+         HIGHLIGHTS
+         ===================================================== -->
+
+    <section class="tu-highlights">
+
+      <div class="tu-highlight">
+
+        <div class="tu-highlight-icon">
+          🍛
+        </div>
+
+        <div>
+          <strong>
+            Freshly Prepared
+          </strong>
+
+          <span>
+            Made fresh every day
+          </span>
+        </div>
+
+      </div>
+
+
+      <div class="tu-highlight">
+
+        <div class="tu-highlight-icon">
+          🥗
+        </div>
+
+        <div>
+          <strong>
+            Quality Food
+          </strong>
+
+          <span>
+            Carefully prepared meals
+          </span>
+        </div>
+
+      </div>
+
+
+      <div class="tu-highlight">
+
+        <div class="tu-highlight-icon">
+          🛵
+        </div>
+
+        <div>
+          <strong>
+            Easy Ordering
+          </strong>
+
+          <span>
+            Simple online ordering
+          </span>
+        </div>
+
+      </div>
+
+
+      <div class="tu-highlight">
+
+        <div class="tu-highlight-icon">
+          💵
+        </div>
+
+        <div>
+          <strong>
+            Cash on Delivery
+          </strong>
+
+          <span>
+            Pay when you receive
+          </span>
+        </div>
+
+      </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         MENU
+         ===================================================== -->
 
     <section
       id="menu"
-      class="menu-section"
+      class="tu-menu-section"
     >
 
-      <div class="section-heading">
+      <div class="tu-menu-heading">
 
-        <p class="eyebrow">
+        <p class="tu-eyebrow">
           TODAY'S MENU
         </p>
 
-        <h2 id="todayDate"></h2>
+        <h2>
+          What Are You Craving?
+        </h2>
+
+        <div
+          id="todayDate"
+          class="tu-menu-date"
+        ></div>
 
         <p>
           Freshly prepared food available today.
@@ -143,162 +1491,210 @@
       </div>
 
 
+      <!-- IMPORTANT:
+           This ID is required by script.js.
+      -->
+
       <div id="menuContainer"></div>
 
     </section>
 
 
 
-    <!-- ORDER TRACKING -->
+    <!-- =====================================================
+         ORDER TRACKING
+         ===================================================== -->
 
     <section
       id="tracking"
-      class="order-tracking"
+      class="tu-tracking-section"
     >
 
-      <div class="section-heading">
+      <div class="tu-tracking-box">
 
-        <p class="eyebrow">
-          TRACK YOUR ORDER
+        <p class="tu-eyebrow">
+          ORDER TRACKING
         </p>
 
         <h2>
-          Order Tracking
+          Where's My Order?
         </h2>
 
-        <p>
-          Enter your Order ID to check your
-          order status.
+        <p class="tu-tracking-description">
+          Enter your Order ID below to see the latest
+          status of your order.
         </p>
 
+
+        <div class="tu-tracking-form">
+
+          <input
+            type="number"
+            id="trackingOrderId"
+            placeholder="Enter Order ID"
+          >
+
+          <button
+            type="button"
+            onclick="trackOrder()"
+            class="tu-track-btn"
+          >
+            🔍 Track Order
+          </button>
+
+        </div>
+
+
+        <!-- IMPORTANT:
+             This ID is required by script.js.
+        -->
+
+        <div id="trackingResult"></div>
+
       </div>
-
-
-      <div class="tracking-box">
-
-        <input
-          type="number"
-          id="trackingOrderId"
-          placeholder="Enter Order ID"
-        >
-
-        <button
-          onclick="trackOrder()"
-          class="primary-btn"
-        >
-          Track Order
-        </button>
-
-      </div>
-
-
-      <div id="trackingResult"></div>
 
     </section>
 
 
 
-    <!-- HOW TO ORDER -->
+    <!-- =====================================================
+         HOW TO ORDER
+         ===================================================== -->
 
-    <section class="how">
+    <section class="tu-how-section">
 
-      <div class="section-heading">
+      <div class="tu-how-heading">
 
-        <p class="eyebrow">
+        <p class="tu-eyebrow">
           SIMPLE & EASY
         </p>
 
         <h2>
-          How to Order
+          Order In 4 Easy Steps
         </h2>
 
         <p>
-          Order your favourite food in just a few steps.
+          From menu to doorstep, ordering is simple.
         </p>
 
       </div>
 
 
-      <div class="steps">
+      <div class="tu-steps">
 
-        <div>
 
-          <b>
+        <div class="tu-step">
+
+          <div class="tu-step-number">
             1
-          </b>
+          </div>
+
+          <strong>
+            Choose Your Food
+          </strong>
 
           <span>
-            Choose your food
+            Browse today's fresh menu.
           </span>
 
         </div>
 
 
-        <div>
+        <div class="tu-step">
 
-          <b>
+          <div class="tu-step-number">
             2
-          </b>
+          </div>
+
+          <strong>
+            Add To Cart
+          </strong>
 
           <span>
-            Add to cart
+            Select your favourite dishes.
           </span>
 
         </div>
 
 
-        <div>
+        <div class="tu-step">
 
-          <b>
+          <div class="tu-step-number">
             3
-          </b>
+          </div>
+
+          <strong>
+            Enter Details
+          </strong>
 
           <span>
-            Enter delivery address
+            Provide your delivery information.
           </span>
 
         </div>
 
 
-        <div>
+        <div class="tu-step">
 
-          <b>
+          <div class="tu-step-number">
             4
-          </b>
+          </div>
+
+          <strong>
+            Enjoy Your Meal
+          </strong>
 
           <span>
-            Place your order
+            Place your order with COD.
           </span>
 
         </div>
+
 
       </div>
 
     </section>
+
 
   </main>
 
 
 
-  <!-- FOOTER -->
+  <!-- =====================================================
+       FOOTER
+       ===================================================== -->
 
-  <footer>
+  <footer class="tu-footer">
 
-    <strong>
+    <img
+      src="assets/logo.jpeg"
+      alt="Thulir Unavagam Logo"
+      class="tu-footer-logo"
+    >
+
+    <h3>
       Thulir Unavagam
-    </strong>
+    </h3>
 
     <p>
       Fresh food, every day.
     </p>
 
+    <div class="tu-footer-divider"></div>
+
     <p>
-      © 2026 Thulir Unavagam. All rights reserved.
+      © 2026 Thulir Unavagam.
+      All rights reserved.
     </p>
 
   </footer>
 
 
+
+  <!-- =====================================================
+       EXISTING JAVASCRIPT
+       DO NOT CHANGE
+       ===================================================== -->
 
   <script src="script.js"></script>
 

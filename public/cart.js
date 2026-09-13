@@ -1,191 +1,110 @@
+// ==========================================
+// CART DATA
+// ==========================================
+
 let cart =
-  JSON.parse(localStorage.getItem("thulirCart")) || [];
+  JSON.parse(
+    localStorage.getItem("thulirCart") || "[]"
+  );
 
 
-function renderCart() {
+// ==========================================
+// FOOD IMAGE MAPPING
+// ==========================================
 
-  const container =
-    document.getElementById("cartPageContainer");
+const foodImages = {
 
-  if (!cart.length) {
+  "idli":
+    "assets/food/idli.jpg",
 
-    container.innerHTML = `
-      <div class="checkout-box">
+  "dosa":
+    "assets/food/dosa.jpg",
 
-        <h2>Your Cart is Empty</h2>
+  "chapati":
+    "assets/food/chapati.jpg",
 
-        <p>
-          Add some delicious food from today's menu.
-        </p>
+  "chapathi":
+    "assets/food/chapati.jpg",
 
-        <a
-          href="index.html"
-          class="primary-btn"
-        >
-          🍽️ Go to Menu
-        </a>
+  "poori":
+    "assets/food/poori.jpg",
 
-      </div>
-    `;
+  "pongal":
+    "assets/food/pongal.jpg",
 
-    return;
-  }
+  "vada":
+    "assets/food/vada.jpg",
 
+  "medu vada":
+    "assets/food/vada.jpg",
 
-  let total = 0;
+  "egg rice":
+    "assets/food/egg-rice.jpg",
 
+  "egg-rice":
+    "assets/food/egg-rice.jpg",
 
-  const itemsHTML = cart.map((item, index) => {
+  "egg noodles":
+    "assets/food/egg-noodles.jpg",
 
-    const itemTotal =
-      Number(item.price) * item.qty;
+  "egg-noodles":
+    "assets/food/egg-noodles.jpg",
 
-    total += itemTotal;
+  "semiya biryani":
+    "assets/food/semiya-biryani.jpg",
 
+  "semiya-biryani":
+    "assets/food/semiya-biryani.jpg",
 
-    return `
-      <div class="checkout-item">
+  "biryani":
+    "assets/food/biryani.jpg",
 
-        <div>
+  "empty biryani":
+    "assets/food/empty-biryani.jpg",
 
-          <strong>
-            ${item.name}
-          </strong>
+  "empty-biryani":
+    "assets/food/empty-biryani.jpg",
 
-          <p>
-            ₹${Number(item.price).toFixed(0)}
-            each
-          </p>
+  "tomato rice":
+    "assets/food/tomato-rice.jpg",
 
-        </div>
+  "tomato-rice":
+    "assets/food/tomato-rice.jpg",
 
+  "malli rice":
+    "assets/food/malli-rice.jpg",
 
-        <div class="cart-controls">
+  "malli-rice":
+    "assets/food/malli-rice.jpg",
 
-          <button
-            onclick="decreaseQuantity(${index})"
-            class="quantity-btn"
-          >
-            −
-          </button>
+  "coriander rice":
+    "assets/food/malli-rice.jpg"
 
-          <span class="quantity">
-            ${item.qty}
-          </span>
-
-          <button
-            onclick="increaseQuantity(${index})"
-            class="quantity-btn"
-          >
-            +
-          </button>
-
-        </div>
+};
 
 
-        <div>
+// ==========================================
+// GET FOOD IMAGE
+// ==========================================
 
-          <strong>
-            ₹${itemTotal.toFixed(0)}
-          </strong>
+function getFoodImage(name) {
 
-          <br>
+  const foodName =
+    String(name || "")
+      .toLowerCase()
+      .trim();
 
-          <button
-            onclick="removeItem(${index})"
-            class="remove-btn"
-          >
-            Remove
-          </button>
+  return (
+    foodImages[foodName] ||
+    "assets/food/idli.jpg"
+  );
 
-        </div>
-
-      </div>
-    `;
-
-  }).join("");
-
-
-  container.innerHTML = `
-
-    <div class="checkout-box">
-
-      <h2>
-        Your Cart
-      </h2>
-
-      <div class="cart-items">
-
-        ${itemsHTML}
-
-      </div>
-
-      <hr>
-
-      <h2>
-        Total: ₹${total.toFixed(0)}
-      </h2>
-
-      <button
-        onclick="proceedToCheckout()"
-        class="checkout-btn"
-      >
-        Proceed to Checkout
-      </button>
-
-      <br><br>
-
-      <a href="index.html">
-        ← Continue Shopping
-      </a>
-
-    </div>
-
-  `;
 }
 
 
-
-function increaseQuantity(index) {
-
-  cart[index].qty++;
-
-  saveCart();
-
-  renderCart();
-}
-
-
-
-function decreaseQuantity(index) {
-
-  if (cart[index].qty > 1) {
-
-    cart[index].qty--;
-
-  } else {
-
-    cart.splice(index, 1);
-
-  }
-
-  saveCart();
-
-  renderCart();
-}
-
-
-
-function removeItem(index) {
-
-  cart.splice(index, 1);
-
-  saveCart();
-
-  renderCart();
-}
-
-
+// ==========================================
+// SAVE CART
+// ==========================================
 
 function saveCart() {
 
@@ -197,12 +116,458 @@ function saveCart() {
 }
 
 
+// ==========================================
+// RENDER CART
+// ==========================================
 
-function proceedToCheckout() {
+function renderCart() {
 
-  window.location.href = "checkout.html";
+  const container =
+    document.getElementById(
+      "cartPageContainer"
+    );
+
+  if (!container) {
+    return;
+  }
+
+
+  // EMPTY CART
+
+  if (!cart.length) {
+
+    container.innerHTML = `
+
+      <div class="cart-items-box empty-cart">
+
+        <div class="empty-cart-icon">
+          🛒
+        </div>
+
+        <h3>
+          Your Cart is Empty
+        </h3>
+
+        <p>
+          Add some delicious food from today's menu.
+        </p>
+
+        <a
+          href="index.html"
+          class="empty-cart-btn"
+        >
+          🍽️ Browse Menu
+        </a>
+
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+
+  // CALCULATE TOTAL
+
+  let total = 0;
+
+  cart.forEach(item => {
+
+    const price =
+      Number(
+        item.price ||
+        item.unit_price ||
+        0
+      );
+
+    const quantity =
+      Number(
+        item.quantity ||
+        item.qty ||
+        1
+      );
+
+    total +=
+      price * quantity;
+
+  });
+
+
+  // CART ITEMS
+
+  const itemsHTML =
+    cart.map(
+      (item, index) => {
+
+        const name =
+          item.name ||
+          item.food_name ||
+          "Food Item";
+
+        const price =
+          Number(
+            item.price ||
+            item.unit_price ||
+            0
+          );
+
+        const quantity =
+          Number(
+            item.quantity ||
+            item.qty ||
+            1
+          );
+
+        const itemTotal =
+          price * quantity;
+
+        const image =
+          getFoodImage(name);
+
+
+        return `
+
+          <div class="cart-item">
+
+            <img
+              src="${image}"
+              alt="${name}"
+              class="cart-item-image"
+            >
+
+            <div class="cart-item-info">
+
+              <h4>
+                ${name}
+              </h4>
+
+              <div class="cart-item-price">
+                ₹${price.toFixed(0)}
+              </div>
+
+              <div class="quantity-controls">
+
+                <button
+                  class="quantity-btn"
+                  onclick="decreaseQuantity(${index})"
+                >
+                  −
+                </button>
+
+                <span class="quantity-value">
+                  ${quantity}
+                </span>
+
+                <button
+                  class="quantity-btn"
+                  onclick="increaseQuantity(${index})"
+                >
+                  +
+                </button>
+
+              </div>
+
+              <button
+                class="remove-btn"
+                onclick="removeItem(${index})"
+              >
+                🗑️ Remove
+              </button>
+
+            </div>
+
+            <div class="cart-item-total">
+
+              ₹${itemTotal.toFixed(0)}
+
+            </div>
+
+          </div>
+
+        `;
+
+      }
+    ).join("");
+
+
+  // FINAL CART UI
+
+  container.innerHTML = `
+
+    <div class="cart-layout">
+
+
+      <!-- ITEMS -->
+
+      <div class="cart-items-box">
+
+        <h3>
+          Your Items
+        </h3>
+
+        ${itemsHTML}
+
+      </div>
+
+
+      <!-- SUMMARY -->
+
+      <div class="cart-summary-box">
+
+        <h3>
+          Order Summary
+        </h3>
+
+        <div class="summary-row">
+
+          <span>
+            Items
+          </span>
+
+          <strong>
+            ${getTotalQuantity()}
+          </strong>
+
+        </div>
+
+
+        <div class="summary-row">
+
+          <span>
+            Subtotal
+          </span>
+
+          <strong>
+            ₹${total.toFixed(0)}
+          </strong>
+
+        </div>
+
+
+        <div class="summary-row">
+
+          <span>
+            Payment
+          </span>
+
+          <strong>
+            💵 Cash on Delivery
+          </strong>
+
+        </div>
+
+
+        <div class="summary-total">
+
+          <span>
+            Total
+          </span>
+
+          <strong>
+            ₹${total.toFixed(0)}
+          </strong>
+
+        </div>
+
+
+        <button
+          class="checkout-btn-cart"
+          onclick="proceedToCheckout()"
+        >
+          🛒 Proceed to Checkout
+        </button>
+
+
+        <a
+          href="index.html"
+          class="continue-shopping"
+        >
+          ← Continue Shopping
+        </a>
+
+      </div>
+
+    </div>
+
+  `;
 
 }
 
+
+// ==========================================
+// TOTAL QUANTITY
+// ==========================================
+
+function getTotalQuantity() {
+
+  return cart.reduce(
+    (total, item) => {
+
+      return (
+        total +
+        Number(
+          item.quantity ||
+          item.qty ||
+          1
+        )
+      );
+
+    },
+    0
+  );
+
+}
+
+
+// ==========================================
+// INCREASE QUANTITY
+// ==========================================
+
+function increaseQuantity(index) {
+
+  if (!cart[index]) {
+    return;
+  }
+
+
+  if (cart[index].quantity !== undefined) {
+
+    cart[index].quantity =
+      Number(cart[index].quantity) + 1;
+
+  } else {
+
+    cart[index].qty =
+      Number(cart[index].qty || 1) + 1;
+
+  }
+
+
+  saveCart();
+
+  renderCart();
+
+}
+
+
+// ==========================================
+// DECREASE QUANTITY
+// ==========================================
+
+function decreaseQuantity(index) {
+
+  if (!cart[index]) {
+    return;
+  }
+
+
+  let quantity =
+    Number(
+      cart[index].quantity ||
+      cart[index].qty ||
+      1
+    );
+
+
+  if (quantity <= 1) {
+
+    removeItem(index);
+
+    return;
+
+  }
+
+
+  quantity--;
+
+
+  if (cart[index].quantity !== undefined) {
+
+    cart[index].quantity =
+      quantity;
+
+  } else {
+
+    cart[index].qty =
+      quantity;
+
+  }
+
+
+  saveCart();
+
+  renderCart();
+
+}
+
+
+// ==========================================
+// REMOVE ITEM
+// ==========================================
+
+function removeItem(index) {
+
+  if (!cart[index]) {
+    return;
+  }
+
+
+  const itemName =
+    cart[index].name ||
+    cart[index].food_name ||
+    "Item";
+
+
+  const confirmed =
+    confirm(
+      `Remove ${itemName} from your cart?`
+    );
+
+
+  if (!confirmed) {
+    return;
+  }
+
+
+  cart.splice(
+    index,
+    1
+  );
+
+
+  saveCart();
+
+  renderCart();
+
+}
+
+
+// ==========================================
+// PROCEED TO CHECKOUT
+// ==========================================
+
+function proceedToCheckout() {
+
+  if (!cart.length) {
+
+    alert(
+      "Your cart is empty."
+    );
+
+    return;
+
+  }
+
+
+  window.location.href =
+    "checkout.html";
+
+}
+
+
+// ==========================================
+// START
+// ==========================================
 
 renderCart();
