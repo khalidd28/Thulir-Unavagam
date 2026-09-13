@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>
+    Checkout | Thulir Unavagam
+  </title>
+
+  <link
+    rel="stylesheet"
+    href="style.css"
+  >
+
+</head>
+
+
+<body>
+
+  <!-- NAVBAR -->
+
+  <header class="navbar">
+
+    <div class="brand">
+
+      <img
+        src="assets/logo.jpeg"
+        alt="Thulir Unavagam Logo"
+      >
+
+      <div>
+
+        <h1>
+          Thulir Unavagam
+        </h1>
+
+        <p>
+          Fresh food, every day
+        </p>
+
+      </div>
+
+    </div>
+
+
+    <div class="nav-actions">
+
+      <a href="index.html">
+        Menu
+      </a>
+
+      <a href="cart.html">
+        🛒 Cart
+      </a>
+
+    </div>
+
+  </header>
+
+
+
+  <!-- CHECKOUT -->
+
+  <main>
+
+    <section class="menu-section">
+
+      <div class="section-heading">
+
+        <p class="eyebrow">
+          CHECKOUT
+        </p>
+
+        <h2>
+          Complete Your Order
+        </h2>
+
+        <p>
+          Enter your details to place your order.
+        </p>
+
+      </div>
+
+
+      <div class="checkout-box">
+
+        <h2>
+          Delivery Details
+        </h2>
+
+
+        <form id="checkoutForm">
+
+          <label for="customerName">
+            Customer Name
+          </label>
+
+          <input
+            type="text"
+            id="customerName"
+            placeholder="Enter your name"
+            required
+          >
+
+
+          <label for="customerPhone">
+            Phone Number
+          </label>
+
+          <input
+            type="tel"
+            id="customerPhone"
+            placeholder="Enter your phone number"
+            required
+          >
+
+
+          <label for="customerAddress">
+            Delivery Address
+          </label>
+
+          <textarea
+            id="customerAddress"
+            rows="4"
+            placeholder="Enter your delivery address"
+            required
+          ></textarea>
+
+
+          <div id="checkoutSummary"></div>
+
+
+          <button
+            type="submit"
+            class="checkout-btn"
+          >
+            Place Order
+          </button>
+
+        </form>
+
+
+        <p id="orderMessage"></p>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+
+  <!-- FOOTER -->
+
+  <footer>
+
+    <strong>
+      Thulir Unavagam
+    </strong>
+
+    <p>
+      Fresh food, every day.
+    </p>
+
+    <p>
+      © 2026 Thulir Unavagam. All rights reserved.
+    </p>
+
+  </footer>
+
+
+  <script src="checkout.js"></script>
+
+</body>
+
+</html>

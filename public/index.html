@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>
+    Thulir Unavagam | Fresh Food Ordering
+  </title>
+
+  <link
+    rel="stylesheet"
+    href="style.css"
+  >
+
+</head>
+
+
+<body>
+
+
+  <!-- NAVBAR -->
+
+  <header class="navbar">
+
+    <div class="brand">
+
+      <img
+        src="assets/logo.jpeg"
+        alt="Thulir Unavagam Logo"
+      >
+
+      <div>
+
+        <h1>
+          Thulir Unavagam
+        </h1>
+
+        <p>
+          Fresh food, every day
+        </p>
+
+      </div>
+
+    </div>
+
+
+    <div class="nav-actions">
+
+      <a href="#menu">
+        Menu
+      </a>
+
+      <a href="#tracking">
+        Track Order
+      </a>
+
+
+      <!-- CART NOW OPENS SEPARATE PAGE -->
+
+      <a
+        href="cart.html"
+        class="cart-btn"
+      >
+        🛒 Cart
+        <span id="cartCount">0</span>
+      </a>
+
+    </div>
+
+  </header>
+
+
+
+  <!-- MAIN CONTENT -->
+
+  <main>
+
+
+    <!-- HERO SECTION -->
+
+    <section class="hero">
+
+      <div>
+
+        <p class="eyebrow">
+          WELCOME TO
+        </p>
+
+        <h2>
+          Thulir Unavagam
+        </h2>
+
+        <p>
+          Breakfast, lunch, dinner, tea and snacks —
+          freshly prepared for you.
+        </p>
+
+        <a
+          href="#menu"
+          class="primary-btn"
+        >
+          🍽️ View Today's Menu
+        </a>
+
+      </div>
+
+
+      <img
+        src="assets/menu-banner.jpeg"
+        alt="Thulir Unavagam Food Categories"
+      >
+
+    </section>
+
+
+
+    <!-- MENU SECTION -->
+
+    <section
+      id="menu"
+      class="menu-section"
+    >
+
+      <div class="section-heading">
+
+        <p class="eyebrow">
+          TODAY'S MENU
+        </p>
+
+        <h2 id="todayDate"></h2>
+
+        <p>
+          Freshly prepared food available today.
+        </p>
+
+      </div>
+
+
+      <div id="menuContainer"></div>
+
+    </section>
+
+
+
+    <!-- ORDER TRACKING -->
+
+    <section
+      id="tracking"
+      class="order-tracking"
+    >
+
+      <div class="section-heading">
+
+        <p class="eyebrow">
+          TRACK YOUR ORDER
+        </p>
+
+        <h2>
+          Order Tracking
+        </h2>
+
+        <p>
+          Enter your Order ID to check your
+          order status.
+        </p>
+
+      </div>
+
+
+      <div class="tracking-box">
+
+        <input
+          type="number"
+          id="trackingOrderId"
+          placeholder="Enter Order ID"
+        >
+
+        <button
+          onclick="trackOrder()"
+          class="primary-btn"
+        >
+          Track Order
+        </button>
+
+      </div>
+
+
+      <div id="trackingResult"></div>
+
+    </section>
+
+
+
+    <!-- HOW TO ORDER -->
+
+    <section class="how">
+
+      <div class="section-heading">
+
+        <p class="eyebrow">
+          SIMPLE & EASY
+        </p>
+
+        <h2>
+          How to Order
+        </h2>
+
+        <p>
+          Order your favourite food in just a few steps.
+        </p>
+
+      </div>
+
+
+      <div class="steps">
+
+        <div>
+
+          <b>
+            1
+          </b>
+
+          <span>
+            Choose your food
+          </span>
+
+        </div>
+
+
+        <div>
+
+          <b>
+            2
+          </b>
+
+          <span>
+            Add to cart
+          </span>
+
+        </div>
+
+
+        <div>
+
+          <b>
+            3
+          </b>
+
+          <span>
+            Enter delivery address
+          </span>
+
+        </div>
+
+
+        <div>
+
+          <b>
+            4
+          </b>
+
+          <span>
+            Place your order
+          </span>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+
+  <!-- FOOTER -->
+
+  <footer>
+
+    <strong>
+      Thulir Unavagam
+    </strong>
+
+    <p>
+      Fresh food, every day.
+    </p>
+
+    <p>
+      © 2026 Thulir Unavagam. All rights reserved.
+    </p>
+
+  </footer>
+
+
+
+  <script src="script.js"></script>
+
+</body>
+
+</html>
