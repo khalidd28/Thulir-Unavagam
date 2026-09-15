@@ -2922,110 +2922,8 @@ function displayOrders(orders){
 
 function renderOrderCard(order){
 
-  const items =
-    order.items || [];
-
-
-  let buttons="";
-
-
-  if(order.status === "New"){
-
-    buttons += `
-      <button
-        onclick="
-          updateStatus(
-            ${order.order_id},
-            'Accepted'
-          )
-        "
-      >
-        ✓ Accept
-      </button>
-    `;
-
-  }
-
-
-  if(order.status === "Accepted"){
-
-    buttons += `
-      <button
-        onclick="
-          updateStatus(
-            ${order.order_id},
-            'Preparing'
-          )
-        "
-      >
-        👨‍🍳 Preparing
-      </button>
-    `;
-
-  }
-
-
-  if(order.status === "Preparing"){
-
-    buttons += `
-      <button
-        onclick="
-          updateStatus(
-            ${order.order_id},
-            'Ready'
-          )
-        "
-      >
-        🍱 Ready
-      </button>
-    `;
-
-  }
-
-
-  if(order.status === "Ready"){
-
-    buttons += `
-      <button
-        onclick="
-          updateStatus(
-            ${order.order_id},
-            'Completed'
-          )
-        "
-      >
-        ✓ Completed
-      </button>
-    `;
-
-  }
-
-
-  if(
-    order.status !== "Completed" &&
-    order.status !== "Cancelled"
-  ){
-
-    buttons += `
-      <button
-        class="cancel-btn"
-        onclick="
-          updateStatus(
-            ${order.order_id},
-            'Cancelled'
-          )
-        "
-      >
-        ✕ Cancel
-      </button>
-    `;
-
-  }
-
-
   return `
-
-    <div class="order-card">
+    <div class="order">
 
       <div class="order-top">
 
@@ -3039,163 +2937,106 @@ function renderOrderCard(order){
 
       </div>
 
+      <p>
+        <strong>👤 Customer:</strong>
+        ${escapeHtml(order.customer_name)}
+      </p>
 
-      <div class="order-details-grid">
+      <p>
+        <strong>📞 Phone:</strong>
+        ${escapeHtml(order.phone)}
+      </p>
 
-        <div class="order-detail">
+      <p>
+        <strong>🍽️ Order Type:</strong>
+        ${escapeHtml(order.order_type || "")}
+      </p>
 
-          <strong>
-            Customer
-          </strong>
+      <p>
+        <strong>⏰ Expected Arrival:</strong>
+        ${escapeHtml(order.arrival_time || "")}
+      </p>
 
-          ${escapeHtml(
-            order.customer_name
-          )}
+      <div class="order-items">
 
-        </div>
-
-
-        <div class="order-detail">
-
-          <strong>
-            Phone
-          </strong>
-
-          ${escapeHtml(
-            order.phone
-          )}
-
-        </div>
-
-
-        <div class="order-detail">
-
-          <strong>
-            Order Type
-          </strong>
-
-          ${escapeHtml(
-            order.order_type ||
-            "Parcel"
-          )}
-
-        </div>
-
-
-        <div class="order-detail">
-
-          <strong>
-            Expected Arrival
-          </strong>
-
-          ${
-            order.arrival_time ||
-            "Not specified"
-          }
-
-        </div>
-
-
-        <div class="order-detail">
-
-          <strong>
-            Order Time
-          </strong>
-
-          ${
-            new Date(
-              order.created_at
-            ).toLocaleTimeString(
-              "en-IN",
-              {
-                hour:"2-digit",
-                minute:"2-digit"
-              }
-            )
-          }
-
-        </div>
-
-      </div>
-
-
-      <div class="order-items-box">
-
-        <h4>
-          🍽️ Ordered Items
-        </h4>
+        <strong>🍴 Ordered Items</strong>
 
         ${
-          items.length
-            ? items.map(item=>`
-
-              <div
-                class="admin-order-item"
-              >
-
-                <span>
-
-                  ${escapeHtml(
-                    item.food_name
-                  )}
-
-                  ×
-                  ${Number(
-                    item.quantity
-                  )}
-
-                </span>
-
-                <strong>
-
-                  ${formatMoney(
-                    Number(item.unit_price) *
-                    Number(item.quantity)
-                  )}
-
-                </strong>
-
-              </div>
-
-            `).join("")
-            :
-            `
-              <div>
-                No item details available.
-              </div>
-            `
+          (order.items || [])
+          .map(item => `
+            <p>
+              ${escapeHtml(item.food_name)}
+              × ${item.quantity}
+              =
+              ₹${(
+                Number(item.unit_price) *
+                Number(item.quantity)
+              ).toFixed(2)}
+            </p>
+          `)
+          .join("")
         }
 
       </div>
 
-
-      <div class="order-total-row">
-
-        <span>
-          Total Amount
-        </span>
-
-        <span>
-          ${formatMoney(
-            order.total_amount
-          )}
-        </span>
-
-      </div>
-
+      <p>
+        <strong>💰 Total:</strong>
+        ₹${Number(order.total_amount).toFixed(2)}
+      </p>
 
       <div class="status-buttons">
 
-        ${buttons}
+        <button
+          onclick="updateStatus(${order.order_id},'New')"
+          ${order.status === "New" ? "disabled" : ""}
+        >
+          🆕 New
+        </button>
+
+        <button
+          onclick="updateStatus(${order.order_id},'Accepted')"
+          ${order.status === "Accepted" ? "disabled" : ""}
+        >
+          ✓ Accepted
+        </button>
+
+        <button
+          onclick="updateStatus(${order.order_id},'Preparing')"
+          ${order.status === "Preparing" ? "disabled" : ""}
+        >
+          👨‍🍳 Preparing
+        </button>
+
+        <button
+          onclick="updateStatus(${order.order_id},'Ready')"
+          ${order.status === "Ready" ? "disabled" : ""}
+        >
+          🍱 Ready
+        </button>
+
+        <button
+          onclick="updateStatus(${order.order_id},'Completed')"
+          ${order.status === "Completed" ? "disabled" : ""}
+        >
+          ✅ Completed
+        </button>
+
+        <button
+          class="cancel-btn"
+          onclick="updateStatus(${order.order_id},'Cancelled')"
+          ${order.status === "Cancelled" ||
+            order.status === "Completed"
+            ? "disabled"
+            : ""}
+        >
+          ❌ Cancelled
+        </button>
 
       </div>
 
     </div>
-
   `;
-
 }
-
 
 /* =========================
    TOGGLE DATE
