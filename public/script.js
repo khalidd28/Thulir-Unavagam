@@ -39,6 +39,7 @@ const foodImages = {
 
   "malli rice": "assets/food/malli-rice.jpg",
   "malli-rice": "assets/food/malli-rice.jpg",
+
   "coriander rice": "assets/food/malli-rice.jpg"
 };
 
@@ -51,29 +52,22 @@ async function loadMenu() {
 
   try {
 
-    const response =
-      await fetch("/api/menu");
+    const response = await fetch("/api/menu");
 
     if (!response.ok) {
       throw new Error("Unable to load menu");
     }
 
-    menu =
-      await response.json();
+    menu = await response.json();
 
     renderMenu();
 
   } catch (error) {
 
-    console.error(
-      "MENU ERROR:",
-      error
-    );
+    console.error("MENU ERROR:", error);
 
     const container =
-      document.getElementById(
-        "menuContainer"
-      );
+      document.getElementById("menuContainer");
 
     if (container) {
 
@@ -83,11 +77,12 @@ async function loadMenu() {
     }
 
   }
+
 }
 
 
 // ==========================================
-// GET IMAGE FOR FOOD ITEM
+// GET FOOD IMAGE
 // ==========================================
 
 function getFoodImage(foodName) {
@@ -101,6 +96,7 @@ function getFoodImage(foodName) {
     foodImages[name] ||
     "assets/food/idli.jpg"
   );
+
 }
 
 
@@ -111,9 +107,7 @@ function getFoodImage(foodName) {
 function renderMenu() {
 
   const container =
-    document.getElementById(
-      "menuContainer"
-    );
+    document.getElementById("menuContainer");
 
   if (!container) {
     return;
@@ -125,6 +119,7 @@ function renderMenu() {
       "<p>No items available today.</p>";
 
     return;
+
   }
 
   const categories = [
@@ -149,9 +144,10 @@ function renderMenu() {
         }
 
         return `
+
           <div class="category">
 
-            <h3>${category}</h3>
+            <h3>${escapeHtml(category)}</h3>
 
             <div class="cards">
 
@@ -159,9 +155,7 @@ function renderMenu() {
                 .map(item => {
 
                   const image =
-                    getFoodImage(
-                      item.name
-                    );
+                    getFoodImage(item.name);
 
                   return `
 
@@ -169,35 +163,41 @@ function renderMenu() {
 
                       <img
                         src="${image}"
-                        alt="${item.name}"
+                        alt="${escapeHtml(item.name)}"
                         class="food-image"
                       >
 
                       <div class="card-content">
 
                         <h4>
-                          ${item.name}
+                          ${escapeHtml(item.name)}
                         </h4>
 
                         <p>
                           ${
-                            item.description ||
-                            "Freshly prepared at Thulir Unavagam."
+                            escapeHtml(
+                              item.description ||
+                              "Freshly prepared at Thulir Unavagam."
+                            )
                           }
                         </p>
 
-                        <div class="price">
-                          ₹${Number(
-                            item.price
-                          ).toFixed(0)}
-                        </div>
+                        <div class="card-bottom">
 
-                        <button
-                          class="add"
-                          onclick="addToCart(${item.food_id})"
-                        >
-                          Add to Cart
-                        </button>
+                          <div class="price">
+                            ₹${Number(
+                              item.price
+                            ).toFixed(0)}
+                          </div>
+
+                          <button
+                            class="add"
+                            onclick="addToCart(${item.food_id})"
+                          >
+                            Add to Cart
+                          </button>
+
+                        </div>
 
                       </div>
 
@@ -211,10 +211,12 @@ function renderMenu() {
             </div>
 
           </div>
+
         `;
 
       })
       .join("");
+
 }
 
 
@@ -232,11 +234,10 @@ function addToCart(foodId) {
 
   if (!item) {
 
-    alert(
-      "Food item not found."
-    );
+    alert("Food item not found.");
 
     return;
+
   }
 
   const existing =
@@ -280,6 +281,7 @@ function addToCart(foodId) {
     item.name +
     " added to cart"
   );
+
 }
 
 
@@ -292,14 +294,12 @@ function updateCartCount() {
   const count =
     cart.reduce(
       (sum, item) =>
-        sum + item.qty,
+        sum + Number(item.qty || 0),
       0
     );
 
   const cartCount =
-    document.getElementById(
-      "cartCount"
-    );
+    document.getElementById("cartCount");
 
   if (cartCount) {
 
@@ -307,313 +307,7 @@ function updateCartCount() {
       count;
 
   }
-}
 
-
-// ==========================================
-// SHOW CART
-// ==========================================
-
-function showCart() {
-
-  const checkoutContainer =
-    document.getElementById(
-      "checkoutContainer"
-    );
-
-  if (!checkoutContainer) {
-    return;
-  }
-
-  if (!cart.length) {
-
-    checkoutContainer.innerHTML = `
-
-      <div class="checkout-box">
-
-        <h2>Your Cart</h2>
-
-        <p>Your cart is empty.</p>
-
-      </div>
-
-    `;
-
-    return;
-  }
-
-  const total =
-    cart.reduce(
-      (sum, item) =>
-        sum +
-        item.price *
-        item.qty,
-      0
-    );
-
-  const cartItems =
-    cart
-      .map(
-        item => `
-
-          <div class="checkout-item">
-
-            <strong>
-              ${item.name}
-            </strong>
-
-            <span>
-              ${item.qty}
-              × ₹${item.price.toFixed(0)}
-              =
-              ₹${(
-                item.price *
-                item.qty
-              ).toFixed(0)}
-            </span>
-
-          </div>
-
-        `
-      )
-      .join("");
-
-  checkoutContainer.innerHTML = `
-
-    <div class="checkout-box">
-
-      <h2>Your Cart</h2>
-
-      <div class="cart-items">
-        ${cartItems}
-      </div>
-
-      <h3>
-        Total:
-        ₹${total.toFixed(0)}
-      </h3>
-
-      <hr>
-
-      <h2>Checkout</h2>
-
-      <form id="checkoutForm">
-
-        <label>
-          Customer Name
-        </label>
-
-        <input
-          type="text"
-          id="customerName"
-          required
-          placeholder="Enter your name"
-        >
-
-        <label>
-          Phone Number
-        </label>
-
-        <input
-          type="tel"
-          id="customerPhone"
-          required
-          placeholder="Enter your phone number"
-        >
-
-        <label>
-          Delivery Address
-        </label>
-
-        <textarea
-          id="customerAddress"
-          required
-          placeholder="Enter your delivery address"
-          rows="4"
-        ></textarea>
-
-        <button
-          type="submit"
-          class="checkout-btn"
-        >
-          Place Order
-        </button>
-
-      </form>
-
-      <p id="orderMessage"></p>
-
-    </div>
-
-  `;
-
-  document
-    .getElementById(
-      "checkoutForm"
-    )
-    .addEventListener(
-      "submit",
-      placeOrder
-    );
-}
-
-
-// ==========================================
-// PLACE ORDER
-// ==========================================
-
-async function placeOrder(event) {
-
-  event.preventDefault();
-
-  const customerName =
-    document
-      .getElementById(
-        "customerName"
-      )
-      .value
-      .trim();
-
-  const customerPhone =
-    document
-      .getElementById(
-        "customerPhone"
-      )
-      .value
-      .trim();
-
-  const customerAddress =
-    document
-      .getElementById(
-        "customerAddress"
-      )
-      .value
-      .trim();
-
-  const message =
-    document.getElementById(
-      "orderMessage"
-    );
-
-  if (
-    !customerName ||
-    !customerPhone ||
-    !customerAddress
-  ) {
-
-    message.textContent =
-      "Please fill all customer details.";
-
-    return;
-  }
-
-  const items =
-    cart.map(
-      item => ({
-
-        food_id:
-          item.food_id,
-
-        quantity:
-          item.qty
-
-      })
-    );
-
-  try {
-
-    message.textContent =
-      "Placing your order...";
-
-    const response =
-      await fetch(
-        "/api/orders",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
-
-          body:
-            JSON.stringify({
-
-              customer_name:
-                customerName,
-
-              phone:
-                customerPhone,
-
-              address:
-                customerAddress,
-
-              items:
-                items
-
-            })
-        }
-      );
-
-    const data =
-      await response.json();
-
-    if (!response.ok) {
-
-      throw new Error(
-        data.message ||
-        "Unable to place order."
-      );
-
-    }
-
-    message.innerHTML = `
-
-      <strong>
-        Order placed successfully!
-      </strong>
-
-      <br>
-
-      Order ID:
-      #${data.order_id}
-
-      <br>
-
-      Total Amount:
-      ₹${Number(
-        data.total_amount
-      ).toFixed(0)}
-
-    `;
-
-    cart = [];
-
-    localStorage.setItem(
-      "thulirCart",
-      JSON.stringify(cart)
-    );
-
-    updateCartCount();
-
-    document
-      .getElementById(
-        "checkoutForm"
-      )
-      .reset();
-
-  } catch (error) {
-
-    console.error(
-      "ORDER ERROR:",
-      error
-    );
-
-    message.textContent =
-      error.message ||
-      "Unable to place order.";
-
-  }
 }
 
 
@@ -646,6 +340,7 @@ async function trackOrder() {
       "<p>Please enter your Order ID.</p>";
 
     return;
+
   }
 
   if (trackingInterval) {
@@ -656,21 +351,18 @@ async function trackOrder() {
 
   }
 
-  await fetchOrderStatus(
-    orderId
-  );
+  await fetchOrderStatus(orderId);
 
   trackingInterval =
     setInterval(
       () => {
 
-        fetchOrderStatus(
-          orderId
-        );
+        fetchOrderStatus(orderId);
 
       },
       5000
     );
+
 }
 
 
@@ -678,9 +370,7 @@ async function trackOrder() {
 // FETCH ORDER STATUS
 // ==========================================
 
-async function fetchOrderStatus(
-  orderId
-) {
+async function fetchOrderStatus(orderId) {
 
   const result =
     document.getElementById(
@@ -695,7 +385,7 @@ async function fetchOrderStatus(
 
     const response =
       await fetch(
-        `/api/orders/${orderId}`
+        `/api/orders/${encodeURIComponent(orderId)}`
       );
 
     const data =
@@ -712,7 +402,7 @@ async function fetchOrderStatus(
 
 
     // ======================================
-    // SUPPORT BOTH API RESPONSE FORMATS
+    // SUPPORT API RESPONSE
     // ======================================
 
     const order =
@@ -721,10 +411,9 @@ async function fetchOrderStatus(
 
     const items =
       data.items ||
+      order.items ||
       [];
 
-
-    // Make sure an order exists
 
     if (
       !order ||
@@ -738,6 +427,10 @@ async function fetchOrderStatus(
     }
 
 
+    // ======================================
+    // ORDER STATUS FLOW
+    // ======================================
+
     const statuses = [
 
       "New",
@@ -748,14 +441,9 @@ async function fetchOrderStatus(
 
       "Ready",
 
-      "Out for Delivery",
-
-      "Delivered"
+      "Completed"
 
     ];
-
-
-    let statusHTML = "";
 
 
     // ======================================
@@ -763,22 +451,24 @@ async function fetchOrderStatus(
     // ======================================
 
     if (
-      order.status ===
-      "Cancelled"
+      order.status === "Cancelled"
     ) {
 
-      statusHTML = `
+      result.innerHTML = `
 
         <div class="tracking-card">
 
           <h3>
-            Order #${order.order_id || order.id}
+            Order #${escapeHtml(
+              order.order_id ||
+              order.id
+            )}
           </h3>
 
           <p>
 
             <strong>
-              Status:
+              Current Status:
             </strong>
 
             Cancelled ❌
@@ -793,120 +483,221 @@ async function fetchOrderStatus(
 
       `;
 
+      return;
+
     }
 
 
     // ======================================
-    // NORMAL ORDER
+    // CURRENT STATUS INDEX
     // ======================================
 
-    else {
+    const currentIndex =
+      statuses.indexOf(
+        order.status
+      );
 
-      const currentIndex =
-        statuses.indexOf(
-          order.status
-        );
-
-
-      const safeIndex =
-        currentIndex >= 0
-          ? currentIndex
-          : 0;
+    const safeIndex =
+      currentIndex >= 0
+        ? currentIndex
+        : 0;
 
 
-      const trackerHTML =
-        statuses
-          .map(
-            (status, index) => {
+    // ======================================
+    // CREATE STATUS TRACKER
+    // ======================================
 
-              let className =
-                "";
+    const trackerHTML =
+      statuses
+        .map(
+          (status, index) => {
 
+            let className = "";
 
-              if (
-                index <
-                safeIndex
-              ) {
+            if (
+              index <
+              safeIndex
+            ) {
 
-                className =
-                  "completed";
+              className =
+                "completed";
 
-              }
+            }
 
+            if (
+              index ===
+              safeIndex
+            ) {
 
-              if (
-                index ===
-                safeIndex
-              ) {
+              className =
+                "current completed";
 
-                className =
-                  "current completed";
+            }
 
-              }
+            return `
 
-
-              return `
+              <div
+                class="status-step ${className}"
+              >
 
                 <div
-                  class="status-step ${className}"
+                  class="status-circle"
                 >
 
-                  <div
-                    class="status-circle"
-                  >
-
-                    ${
-                      index <=
-                      safeIndex
-                        ? "✓"
-                        : index + 1
-                    }
-
-                  </div>
-
-                  <div
-                    class="status-name"
-                  >
-                    ${status}
-                  </div>
+                  ${
+                    index <=
+                    safeIndex
+                      ? "✓"
+                      : index + 1
+                  }
 
                 </div>
 
-              `;
+                <div
+                  class="status-name"
+                >
 
-            }
-          )
+                  ${status}
+
+                </div>
+
+              </div>
+
+            `;
+
+          }
+        )
+        .join("");
+
+
+    // ======================================
+    // ORDER TYPE
+    // ======================================
+
+    const orderType =
+      order.order_type ||
+      "Parcel";
+
+
+    // ======================================
+    // ARRIVAL TIME
+    // ======================================
+
+    let arrivalTime =
+      order.arrival_time ||
+      "Not specified";
+
+
+    arrivalTime =
+      String(arrivalTime)
+        .substring(0, 5);
+
+
+    // ======================================
+    // ORDER ITEMS
+    // ======================================
+
+    let itemsHTML = "";
+
+    if (
+      items &&
+      items.length
+    ) {
+
+      itemsHTML =
+        items
+          .map(item => {
+
+            const itemName =
+              item.food_name ||
+              item.name ||
+              "Food Item";
+
+            const quantity =
+              Number(
+                item.quantity || 0
+              );
+
+            const unitPrice =
+              Number(
+                item.unit_price ||
+                item.price ||
+                0
+              );
+
+            const itemTotal =
+              unitPrice *
+              quantity;
+
+            return `
+
+              <p>
+
+                ${escapeHtml(itemName)}
+
+                × ${quantity}
+
+                =
+
+                ₹${itemTotal.toFixed(0)}
+
+              </p>
+
+            `;
+
+          })
           .join("");
 
+    } else {
 
-      statusHTML = `
+      itemsHTML =
+        "<p>Order items unavailable.</p>";
 
-        <div class="tracking-card">
-
-          <h3>
-            Order #${order.order_id || order.id}
-          </h3>
+    }
 
 
-          <p>
+    // ======================================
+    // DISPLAY TRACKING
+    // ======================================
 
-            <strong>
-              Current Status:
-            </strong>
+    result.innerHTML = `
 
-            ${order.status}
+      <div class="tracking-card">
 
-          </p>
+        <h3>
+
+          Order #
+          ${escapeHtml(
+            order.order_id ||
+            order.id
+          )}
+
+        </h3>
 
 
-          <div
-            class="order-status-tracker"
-          >
+        <p>
 
-            ${trackerHTML}
+          <strong>
+            Current Status:
+          </strong>
 
-          </div>
+          ${escapeHtml(
+            order.status
+          )}
 
+        </p>
+
+
+        <div
+          class="order-status-tracker"
+        >
+
+          ${trackerHTML}
+
+        </div>
+
+
+        <div class="tracking-info">
 
           <p>
 
@@ -914,7 +705,10 @@ async function fetchOrderStatus(
               Customer:
             </strong>
 
-            ${order.customer_name}
+            ${escapeHtml(
+              order.customer_name ||
+              "-"
+            )}
 
           </p>
 
@@ -922,76 +716,53 @@ async function fetchOrderStatus(
           <p>
 
             <strong>
-              Address:
+              Order Type:
             </strong>
 
-            ${order.address}
+            ${escapeHtml(
+              orderType
+            )}
 
           </p>
 
 
-          <h4>
-            Items
-          </h4>
+          <p>
 
+            <strong>
+              Expected Arrival:
+            </strong>
 
-          ${
-            items.length
-              ? items
-                  .map(
-                    item => `
+            ${escapeHtml(
+              arrivalTime
+            )}
 
-                      <p>
-
-                        ${
-                          item.food_name ||
-                          item.name ||
-                          "Food Item"
-                        }
-
-                        ×
-
-                        ${item.quantity}
-
-                        =
-
-                        ₹${(
-                          Number(
-                            item.unit_price ||
-                            item.price ||
-                            0
-                          ) *
-                          item.quantity
-                        ).toFixed(0)}
-
-                      </p>
-
-                    `
-                  )
-                  .join("")
-              : "<p>Order items unavailable.</p>"
-          }
-
-
-          <h3>
-
-            Total:
-
-            ₹${Number(
-              order.total_amount || 0
-            ).toFixed(0)}
-
-          </h3>
+          </p>
 
         </div>
 
-      `;
 
-    }
+        <h4>
+          🍽️ Items
+        </h4>
 
 
-    result.innerHTML =
-      statusHTML;
+        ${itemsHTML}
+
+
+        <h3>
+
+          Total:
+
+          ₹${Number(
+            order.total_amount ||
+            0
+          ).toFixed(0)}
+
+        </h3>
+
+      </div>
+
+    `;
 
 
   } catch (error) {
@@ -1006,7 +777,10 @@ async function fetchOrderStatus(
       <div class="tracking-card">
 
         <p>
-          ${error.message}
+          ${escapeHtml(
+            error.message ||
+            "Unable to track order."
+          )}
         </p>
 
       </div>
@@ -1014,6 +788,38 @@ async function fetchOrderStatus(
     `;
 
   }
+
+}
+
+
+// ==========================================
+// ESCAPE HTML
+// ==========================================
+
+function escapeHtml(value) {
+
+  return String(value ?? "")
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+    .replace(
+      /</g,
+      "&lt;"
+    )
+    .replace(
+      />/g,
+      "&gt;"
+    )
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+    .replace(
+      /'/g,
+      "&#039;"
+    );
+
 }
 
 
@@ -1045,7 +851,7 @@ if (todayDate) {
 
 
 // ==========================================
-// UPDATE CART COUNT ON START
+// UPDATE CART COUNT
 // ==========================================
 
 updateCartCount();
@@ -1056,3 +862,56 @@ updateCartCount();
 // ==========================================
 
 loadMenu();
+
+
+// ==========================================
+// AUTO TRACK ORDER FROM URL
+// Example:
+// index.html?track=123
+// ==========================================
+
+const urlParams =
+  new URLSearchParams(
+    window.location.search
+  );
+
+const trackId =
+  urlParams.get("track");
+
+if (trackId) {
+
+  const trackingInput =
+    document.getElementById(
+      "trackingOrderId"
+    );
+
+  if (trackingInput) {
+
+    trackingInput.value =
+      trackId;
+
+    trackOrder();
+
+    const trackingSection =
+      document.getElementById(
+        "tracking"
+      );
+
+    if (trackingSection) {
+
+      setTimeout(
+        () => {
+
+          trackingSection.scrollIntoView({
+            behavior: "smooth"
+          });
+
+        },
+        300
+      );
+
+    }
+
+  }
+
+}

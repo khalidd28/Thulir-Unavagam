@@ -3,175 +3,196 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>Checkout | Thulir Unavagam</title>
-
   <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-  <header class="navbar">
+<header class="navbar">
+  <div class="brand">
+    <img src="assets/logo.jpeg" alt="Thulir Unavagam Logo">
 
-    <div class="brand">
+    <div>
+      <h1>Thulir Unavagam</h1>
+      <p>Fresh food, every day</p>
+    </div>
+  </div>
 
-      <img
-        src="assets/logo.jpeg"
-        alt="Thulir Unavagam Logo"
-      >
+  <div class="nav-actions">
+    <a href="index.html">🍽️ Menu</a>
+    <a href="cart.html">🛒 Cart</a>
+  </div>
+</header>
 
-      <div>
 
-        <h1>Thulir Unavagam</h1>
+<main>
 
-        <p>Fresh food, every day</p>
+  <section class="menu-section">
 
-      </div>
+    <div class="section-heading">
+      <p class="eyebrow">CHECKOUT</p>
+
+      <h2>Complete Your Order</h2>
+
+      <p>
+        Choose Dine-in or Parcel and tell us your expected arrival time.
+      </p>
+    </div>
+
+
+    <div class="checkout-box">
+
+      <form id="checkoutForm">
+
+        <!-- CUSTOMER NAME -->
+
+        <label for="customerName">
+          Customer Name
+        </label>
+
+        <input
+          type="text"
+          id="customerName"
+          placeholder="Enter your name"
+          required
+        >
+
+
+        <!-- PHONE -->
+
+        <label for="phone">
+          Phone Number
+        </label>
+
+        <input
+          type="tel"
+          id="phone"
+          placeholder="Enter 10-digit phone number"
+          maxlength="10"
+          inputmode="numeric"
+          required
+        >
+
+
+        <!-- ORDER TYPE -->
+
+        <label>
+          Order Type
+        </label>
+
+        <div class="payment-option">
+
+          <label class="payment-card">
+
+            <input
+              type="radio"
+              name="order_type"
+              value="Dine-in"
+              checked
+            >
+
+            <span>🍽️ Dine-in</span>
+
+          </label>
+
+
+          <label class="payment-card">
+
+            <input
+              type="radio"
+              name="order_type"
+              value="Parcel"
+            >
+
+            <span>📦 Parcel</span>
+
+          </label>
+
+        </div>
+
+
+        <!-- ARRIVAL TIME -->
+
+        <label for="arrivalTime">
+          Expected Arrival Time
+        </label>
+
+        <input
+          type="time"
+          id="arrivalTime"
+          required
+        >
+
+        <p class="form-help">
+          Please choose the time you expect to arrive at the shop.
+        </p>
+
+
+        <!-- PAYMENT -->
+
+        <label>
+          Payment Method
+        </label>
+
+        <div class="payment-option">
+
+          <label class="payment-card">
+
+            <input
+              type="radio"
+              name="payment_method"
+              value="Cash on Delivery"
+              checked
+            >
+
+            <span>💵 Cash on Delivery</span>
+
+          </label>
+
+        </div>
+
+
+        <!-- SUMMARY -->
+
+        <div id="checkoutSummary"></div>
+
+
+        <!-- PLACE ORDER -->
+
+        <button
+          type="submit"
+          class="checkout-btn"
+        >
+          🛒 Place Order
+        </button>
+
+      </form>
+
+
+      <p id="checkoutMessage"></p>
 
     </div>
 
-    <div class="nav-actions">
+  </section>
 
-      <a href="index.html">
-        Menu
-      </a>
-
-      <a href="cart.html">
-        Cart
-      </a>
-
-    </div>
-
-  </header>
+</main>
 
 
-  <main>
+<footer>
 
-    <section class="menu-section">
+  <strong>Thulir Unavagam</strong>
 
-      <div class="section-heading">
+  <p>Fresh food, every day.</p>
 
-        <p class="eyebrow">
-          CHECKOUT
-        </p>
+  <p>
+    © 2026 Thulir Unavagam. All rights reserved.
+  </p>
 
-        <h2>
-          Complete Your Order
-        </h2>
-
-        <p>
-          Enter your details and place your order.
-        </p>
-
-      </div>
-
-
-      <div class="checkout-box">
-
-        <form id="checkoutForm">
-
-          <label for="customerName">
-            Customer Name
-          </label>
-
-          <input
-            type="text"
-            id="customerName"
-            placeholder="Enter your name"
-            required
-          >
-
-
-          <label for="phone">
-            Phone Number
-          </label>
-
-          <input
-            type="tel"
-            id="phone"
-            placeholder="Enter 10-digit phone number"
-            maxlength="10"
-            required
-          >
-
-
-          <label for="address">
-            Delivery Address
-          </label>
-
-          <textarea
-            id="address"
-            placeholder="Enter your complete delivery address"
-            rows="4"
-            required
-          ></textarea>
-
-
-          <!-- PAYMENT METHOD -->
-
-          <label>
-            Payment Method
-          </label>
-
-          <div class="payment-option">
-
-            <label class="payment-card">
-
-              <input
-                type="radio"
-                name="payment_method"
-                value="Cash on Delivery"
-                checked
-              >
-
-              <span>
-                💵 Cash on Delivery
-              </span>
-
-            </label>
-
-          </div>
-
-
-          <div id="checkoutSummary"></div>
-
-
-          <button
-            type="submit"
-            class="checkout-btn"
-          >
-            🛒 Place Order
-          </button>
-
-        </form>
-
-
-        <p id="checkoutMessage"></p>
-
-      </div>
-
-    </section>
-
-  </main>
-
-
-  <footer>
-
-    <strong>
-      Thulir Unavagam
-    </strong>
-
-    <p>
-      Fresh food, every day.
-    </p>
-
-    <p>
-      © 2026 Thulir Unavagam. All rights reserved.
-    </p>
-
-  </footer>
+</footer>
 
 
 <script src="checkout.js"></script>
 
-</body></html>
+</body>
+</html>

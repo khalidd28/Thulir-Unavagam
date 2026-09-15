@@ -347,15 +347,15 @@ function renderCart() {
 
         <div class="summary-row">
 
-          <span>
-            Payment
-          </span>
+  <span>
+    Payment
+  </span>
 
-          <strong>
-            💵 Cash on Delivery
-          </strong>
+  <strong>
+    💵 Cash Payment
+  </strong>
 
-        </div>
+</div>
 
 
         <div class="summary-total">

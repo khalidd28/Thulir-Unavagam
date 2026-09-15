@@ -1,796 +1,983 @@
-const cart = JSON.parse(localStorage.getItem("thulirCart") || "[]");
-
-const form = document.getElementById("checkoutForm");
-const summary = document.getElementById("checkoutSummary");
-const message = document.getElementById("checkoutMessage");
+let cart = JSON.parse(
+  localStorage.getItem("thulirCart") || "[]"
+);
 
 
-// ===============================
-// SHOW CART SUMMARY
-// ===============================
-function showCartSummary() {
+// =====================================================
+// LOAD CHECKOUT
+// =====================================================
 
-  if (cart.length === 0) {
+document.addEventListener("DOMContentLoaded", () => {
+
+  renderCheckoutSummary();
+
+  setDefaultArrivalTime();
+
+  const form =
+    document.getElementById("checkoutForm");
+
+  if (form) {
+    form.addEventListener(
+      "submit",
+      placeOrder
+    );
+  }
+
+});
+
+
+// =====================================================
+// DEFAULT ARRIVAL TIME
+// =====================================================
+
+function setDefaultArrivalTime() {
+
+  const timeInput =
+    document.getElementById("arrivalTime");
+
+  if (!timeInput) return;
+
+  const now = new Date();
+
+  let hours = now.getHours();
+
+  let minutes = now.getMinutes();
+
+  // Round to next 15 minutes
+  minutes =
+    Math.ceil(minutes / 15) * 15;
+
+  if (minutes >= 60) {
+    hours++;
+    minutes = 0;
+  }
+
+  if (hours > 23) {
+    hours = 23;
+    minutes = 45;
+  }
+
+  const formattedHour =
+    String(hours).padStart(2, "0");
+
+  const formattedMinute =
+    String(minutes).padStart(2, "0");
+
+  timeInput.value =
+    `${formattedHour}:${formattedMinute}`;
+}
+
+
+// =====================================================
+// CHECKOUT SUMMARY
+// =====================================================
+
+function renderCheckoutSummary() {
+
+  const summary =
+    document.getElementById(
+      "checkoutSummary"
+    );
+
+  if (!summary) return;
+
+
+  if (!cart.length) {
+
     summary.innerHTML = `
-      <div class="checkout-summary">
-        <h3>Your Cart</h3>
-        <p>Your cart is empty.</p>
-        <a href="index.html">Go back to menu</a>
+      <div class="checkout-empty">
+
+        <h3>Your cart is empty</h3>
+
+        <p>
+          Please add some food before placing an order.
+        </p>
+
+        <a
+          href="index.html"
+          class="checkout-btn"
+        >
+          🍽️ Browse Menu
+        </a>
+
       </div>
     `;
+
     return;
   }
 
+
   let total = 0;
+
 
   let html = `
     <div class="checkout-summary">
+
       <h3>Order Summary</h3>
+
+      <div class="checkout-items">
   `;
+
 
   cart.forEach(item => {
 
-    const name =
-      item.name ||
-      item.food_name ||
-      "Food Item";
-
     const price =
-      Number(item.price || item.unit_price || 0);
+      Number(item.price);
 
     const quantity =
-      Number(item.quantity || item.qty || 1);
+      Number(item.qty);
 
-    const itemTotal = price * quantity;
+    const itemTotal =
+      price * quantity;
 
     total += itemTotal;
 
+
     html += `
-      <div class="checkout-summary-row">
-        <span>${escapeHtml(name)} × ${quantity}</span>
-        <strong>₹${itemTotal.toFixed(2)}</strong>
+      <div class="checkout-item">
+
+        <div>
+
+          <strong>
+            ${escapeHtml(item.name)}
+          </strong>
+
+          <span>
+            ₹${price.toFixed(2)}
+            × ${quantity}
+          </span>
+
+        </div>
+
+        <strong>
+          ₹${itemTotal.toFixed(2)}
+        </strong>
+
       </div>
     `;
+
   });
 
+
   html += `
-      <div class="checkout-total">
-        <span>Total Amount</span>
-        <strong>₹${total.toFixed(2)}</strong>
+
       </div>
 
-      <div class="payment-summary">
-        <span>Payment Method</span>
-        <strong>💵 Cash on Delivery</strong>
+      <div class="checkout-total">
+
+        <span>Total Amount</span>
+
+        <strong>
+          ₹${total.toFixed(2)}
+        </strong>
+
       </div>
 
     </div>
   `;
 
+
   summary.innerHTML = html;
 }
 
-showCartSummary();
 
-
-// ===============================
+// =====================================================
 // PLACE ORDER
-// ===============================
-form.addEventListener("submit", async function (event) {
+// =====================================================
+
+async function placeOrder(event) {
 
   event.preventDefault();
 
-  if (cart.length === 0) {
-    message.textContent = "❌ Your cart is empty.";
-    return;
-  }
+
+  const message =
+    document.getElementById(
+      "checkoutMessage"
+    );
+
 
   const customerName =
-    document.getElementById("customerName").value.trim();
+    document
+      .getElementById("customerName")
+      .value
+      .trim();
+
 
   const phone =
-    document.getElementById("phone").value.trim();
+    document
+      .getElementById("phone")
+      .value
+      .trim();
 
-  const address =
-    document.getElementById("address").value.trim();
+
+  const arrivalTime =
+    document
+      .getElementById("arrivalTime")
+      .value;
 
 
-  // Phone validation
-  if (!/^[0-9]{10}$/.test(phone)) {
+  const orderTypeElement =
+    document.querySelector(
+      'input[name="order_type"]:checked'
+    );
 
-    message.textContent =
-      "❌ Please enter a valid 10-digit phone number.";
+
+  const paymentElement =
+    document.querySelector(
+      'input[name="payment_method"]:checked'
+    );
+
+
+  const orderType =
+    orderTypeElement
+      ? orderTypeElement.value
+      : "";
+
+
+  const paymentMethod =
+    paymentElement
+      ? paymentElement.value
+      : "Cash on Delivery";
+
+
+  // ===================================================
+  // VALIDATION
+  // ===================================================
+
+  if (!customerName) {
+
+    showMessage(
+      "Please enter your name.",
+      "error"
+    );
 
     return;
   }
 
 
-  // Required fields
-  if (!customerName || !address) {
+  if (!/^\d{10}$/.test(phone)) {
 
-    message.textContent =
-      "❌ Please fill in all required details.";
+    showMessage(
+      "Please enter a valid 10-digit phone number.",
+      "error"
+    );
 
     return;
   }
 
 
-  // Convert cart items
-  const items = cart.map(item => {
+  if (
+    orderType !== "Dine-in" &&
+    orderType !== "Parcel"
+  ) {
 
-    return {
-      food_id: Number(
-        item.food_id || item.id
-      ),
+    showMessage(
+      "Please select Dine-in or Parcel.",
+      "error"
+    );
 
-      quantity: Number(
-        item.quantity || item.qty || 1
-      )
-    };
-
-  });
+    return;
+  }
 
 
-  // Check invalid food ID
-  const invalidItem = items.find(
-    item => !item.food_id || item.food_id <= 0
+  if (!arrivalTime) {
+
+    showMessage(
+      "Please select your expected arrival time.",
+      "error"
+    );
+
+    return;
+  }
+
+
+  if (!cart.length) {
+
+    showMessage(
+      "Your cart is empty.",
+      "error"
+    );
+
+    return;
+  }
+
+
+  // ===================================================
+  // SAVE CART ITEMS FOR RECEIPT
+  // ===================================================
+
+  const receiptItems =
+    cart.map(item => ({
+      name: item.name,
+      price: Number(item.price),
+      qty: Number(item.qty),
+      food_id: Number(item.food_id)
+    }));
+
+
+  // ===================================================
+  // PREPARE ITEMS FOR SERVER
+  // ===================================================
+
+  const items = cart.map(item => ({
+    food_id: Number(item.food_id),
+    qty: Number(item.qty)
+  }));
+
+
+  // ===================================================
+  // DISABLE BUTTON
+  // ===================================================
+
+  const button =
+    document.querySelector(
+      "#checkoutForm button[type='submit']"
+    );
+
+
+  if (button) {
+
+    button.disabled = true;
+
+    button.textContent =
+      "⏳ Placing Order...";
+
+  }
+
+
+  showMessage(
+    "Please wait...",
+    "info"
   );
-
-  if (invalidItem) {
-
-    message.textContent =
-      "❌ Invalid food item in cart.";
-
-    return;
-  }
 
 
   try {
 
-    message.textContent =
-      "⏳ Placing your order...";
+    // =================================================
+    // SEND ORDER TO SERVER
+    // =================================================
+
+    const response =
+      await fetch("/api/orders", {
+
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json"
+        },
+
+        body: JSON.stringify({
+
+          customer_name:
+            customerName,
+
+          phone:
+            phone,
+
+          order_type:
+            orderType,
+
+          arrival_time:
+            arrivalTime,
+
+          payment_method:
+            paymentMethod,
+
+          items:
+            items
+
+        })
+
+      });
 
 
-    const response = await fetch("/api/orders", {
-
-      method: "POST",
-
-      headers: {
-        "Content-Type": "application/json"
-      },
-
-      body: JSON.stringify({
-
-        customer_name: customerName,
-
-        phone: phone,
-
-        address: address,
-
-        payment_method: "Cash on Delivery",
-
-        items: items
-
-      })
-
-    });
-
-
-    const data = await response.json();
+    const data =
+      await response.json();
 
 
     if (!response.ok) {
 
       throw new Error(
         data.message ||
-        "Unable to place your order."
+        "Unable to place order."
       );
 
     }
 
 
-    // ===============================
-    // ORDER SUCCESS
-    // ===============================
+    // =================================================
+    // SAVE ORDER DATA BEFORE CLEARING CART
+    // =================================================
 
-    const orderId = data.order_id;
+    data.customer_name =
+      data.customer_name ||
+      customerName;
 
+    data.phone =
+      data.phone ||
+      phone;
 
-    // Calculate total
-    let totalAmount = 0;
+    data.order_type =
+      data.order_type ||
+      orderType;
 
-    cart.forEach(item => {
+    data.arrival_time =
+      data.arrival_time ||
+      arrivalTime;
 
-      const price =
-        Number(item.price || item.unit_price || 0);
+    data.payment_method =
+      data.payment_method ||
+      paymentMethod;
 
-      const quantity =
-        Number(item.quantity || item.qty || 1);
+    data.status =
+      data.status ||
+      "New";
 
-      totalAmount += price * quantity;
-
-    });
-
-
-    // Create receipt items
-    let receiptItems = "";
-
-    cart.forEach(item => {
-
-      const name =
-        item.name ||
-        item.food_name ||
-        "Food Item";
-
-      const price =
-        Number(item.price || item.unit_price || 0);
-
-      const quantity =
-        Number(item.quantity || item.qty || 1);
-
-      const itemTotal =
-        price * quantity;
-
-      receiptItems += `
-        <tr>
-          <td>${escapeHtml(name)}</td>
-          <td>${quantity}</td>
-          <td>₹${price.toFixed(2)}</td>
-          <td>₹${itemTotal.toFixed(2)}</td>
-        </tr>
-      `;
-    });
+    data.items =
+      receiptItems;
 
 
-    // Clear cart
-    localStorage.removeItem("thulirCart");
+    // =================================================
+    // CLEAR CART
+    // =================================================
+
+    localStorage.removeItem(
+      "thulirCart"
+    );
+
+    cart = [];
 
 
-    // ===============================
-    // SHOW CONFIRMATION + RECEIPT
-    // ===============================
+    // =================================================
+    // SHOW CONFIRMATION
+    // =================================================
 
-    document.body.innerHTML = `
+    showOrderConfirmation(data);
 
-      <header class="navbar">
 
-        <div class="brand">
+  } catch (error) {
 
-          <img
-            src="assets/logo.jpeg"
-            alt="Thulir Unavagam Logo"
-          >
+    console.error(
+      "ORDER ERROR:",
+      error
+    );
 
-          <div>
 
-            <h1>Thulir Unavagam</h1>
+    showMessage(
+      error.message ||
+      "Unable to place order.",
+      "error"
+    );
 
-            <p>Fresh food, every day</p>
+
+    if (button) {
+
+      button.disabled = false;
+
+      button.textContent =
+        "🛒 Place Order";
+
+    }
+
+  }
+
+}
+
+
+// =====================================================
+// ORDER CONFIRMATION
+// =====================================================
+
+function showOrderConfirmation(data) {
+
+  const main =
+    document.querySelector("main");
+
+
+  const orderId =
+    data.order_id;
+
+
+  const total =
+    Number(
+      data.total_amount || 0
+    );
+
+
+  const orderType =
+    data.order_type || "";
+
+
+  const arrivalTime =
+    data.arrival_time || "";
+
+
+  const paymentMethod =
+    data.payment_method ||
+    "Cash on Delivery";
+
+
+  main.innerHTML = `
+
+    <section class="menu-section">
+
+      <div class="section-heading">
+
+        <p class="eyebrow">
+          ORDER CONFIRMED
+        </p>
+
+        <h2>
+          🎉 Your Order is Placed!
+        </h2>
+
+        <p>
+          Thank you for ordering from
+          Thulir Unavagam.
+        </p>
+
+      </div>
+
+
+      <div class="checkout-box">
+
+        <div class="order-confirmation">
+
+          <div class="order-success-icon">
+            ✓
+          </div>
+
+
+          <h3>
+            Order #${orderId}
+          </h3>
+
+
+          <p>
+            Your order has been received successfully.
+          </p>
+
+
+          <div class="confirmation-details">
+
+            <div>
+
+              <span>Customer</span>
+
+              <strong>
+                ${escapeHtml(
+                  data.customer_name || ""
+                )}
+              </strong>
+
+            </div>
+
+
+            <div>
+
+              <span>Phone</span>
+
+              <strong>
+                ${escapeHtml(
+                  data.phone || ""
+                )}
+              </strong>
+
+            </div>
+
+
+            <div>
+
+              <span>Order Type</span>
+
+              <strong>
+                ${escapeHtml(orderType)}
+              </strong>
+
+            </div>
+
+
+            <div>
+
+              <span>Expected Arrival</span>
+
+              <strong>
+                ${escapeHtml(arrivalTime)}
+              </strong>
+
+            </div>
+
+
+            <div>
+
+              <span>Payment</span>
+
+              <strong>
+                ${escapeHtml(paymentMethod)}
+              </strong>
+
+            </div>
+
+
+            <div>
+
+              <span>Total Amount</span>
+
+              <strong>
+                ₹${total.toFixed(2)}
+              </strong>
+
+            </div>
 
           </div>
 
-        </div>
-
-        <div class="nav-actions">
-
-          <a href="index.html">
-            Menu
-          </a>
-
-        </div>
-
-      </header>
-
-
-      <main>
-
-        <section class="menu-section">
 
           <div
-            class="checkout-box"
-            style="
-              max-width:750px;
-              margin:40px auto;
-              text-align:center;
-            "
+            id="liveOrderTracking"
+            class="live-tracking"
           >
 
-            <div
-              style="
-                font-size:65px;
-                margin-bottom:10px;
-              "
-            >
-              ✅
-            </div>
-
-
-            <p class="eyebrow">
-              ORDER CONFIRMED
-            </p>
-
-
-            <h2>
-              Order Placed Successfully!
-            </h2>
-
+            <h3>
+              Order Status
+            </h3>
 
             <p>
-              Thank you for ordering from
-              <strong>Thulir Unavagam</strong>.
+              Loading status...
             </p>
 
-
-            <!-- RECEIPT -->
-
-            <div
-              id="receipt"
-              style="
-                background:#ffffff;
-                border:1px solid #ddd;
-                border-radius:14px;
-                padding:25px;
-                margin:30px 0;
-                text-align:left;
-                box-shadow:0 8px 25px rgba(0,0,0,0.06);
-              "
-            >
-
-              <div
-                style="
-                  text-align:center;
-                  border-bottom:1px solid #ddd;
-                  padding-bottom:18px;
-                  margin-bottom:20px;
-                "
-              >
-
-                <h2 style="margin:0;">
-                  🍽️ Thulir Unavagam
-                </h2>
-
-                <p style="margin:5px 0;">
-                  Fresh food, every day
-                </p>
-
-                <h3 style="margin:12px 0 0;">
-                  ORDER RECEIPT
-                </h3>
-
-              </div>
+          </div>
 
 
-              <div
-                style="
-                  display:grid;
-                  grid-template-columns:1fr 1fr;
-                  gap:10px;
-                  margin-bottom:20px;
-                "
-              >
-
-                <p>
-                  <strong>Order Number:</strong><br>
-                  #${orderId}
-                </p>
-
-                <p>
-                  <strong>Customer:</strong><br>
-                  ${escapeHtml(customerName)}
-                </p>
-
-                <p>
-                  <strong>Phone:</strong><br>
-                  ${escapeHtml(phone)}
-                </p>
-
-                <p>
-                  <strong>Payment:</strong><br>
-                  💵 Cash on Delivery
-                </p>
-
-                <p style="grid-column:1 / -1;">
-                  <strong>Delivery Address:</strong><br>
-                  ${escapeHtml(address)}
-                </p>
-
-              </div>
-
-
-              <div style="overflow-x:auto;">
-
-                <table
-                  style="
-                    width:100%;
-                    border-collapse:collapse;
-                    margin-top:15px;
-                  "
-                >
-
-                  <thead>
-
-                    <tr style="background:#f5f5f5;">
-
-                      <th
-                        style="
-                          padding:10px;
-                          border-bottom:1px solid #ddd;
-                          text-align:left;
-                        "
-                      >
-                        Item
-                      </th>
-
-                      <th
-                        style="
-                          padding:10px;
-                          border-bottom:1px solid #ddd;
-                          text-align:center;
-                        "
-                      >
-                        Qty
-                      </th>
-
-                      <th
-                        style="
-                          padding:10px;
-                          border-bottom:1px solid #ddd;
-                          text-align:right;
-                        "
-                      >
-                        Price
-                      </th>
-
-                      <th
-                        style="
-                          padding:10px;
-                          border-bottom:1px solid #ddd;
-                          text-align:right;
-                        "
-                      >
-                        Total
-                      </th>
-
-                    </tr>
-
-                  </thead>
-
-
-                  <tbody>
-
-                    ${receiptItems}
-
-                  </tbody>
-
-                </table>
-
-              </div>
-
-
-              <div
-                style="
-                  border-top:2px solid #222;
-                  margin-top:20px;
-                  padding-top:15px;
-                  display:flex;
-                  justify-content:space-between;
-                  font-size:20px;
-                  font-weight:bold;
-                "
-              >
-
-                <span>
-                  Total Amount
-                </span>
-
-                <span>
-                  ₹${totalAmount.toFixed(2)}
-                </span>
-
-              </div>
-
-
-              <div
-                style="
-                  margin-top:20px;
-                  padding:12px;
-                  background:#fff3cd;
-                  color:#856404;
-                  border-radius:8px;
-                  text-align:center;
-                  font-weight:600;
-                "
-              >
-
-                💵 Payment will be collected through
-                Cash on Delivery.
-
-              </div>
-
-            </div>
-
-
-            <!-- PRINT BUTTON -->
+          <div class="confirmation-actions">
 
             <button
-              class="checkout-btn"
               onclick="printReceipt()"
-              style="margin-bottom:15px;"
+              class="checkout-btn"
             >
               🖨️ Print Receipt
             </button>
 
 
-            <!-- TRACKING -->
-
-            <h3>
-              📦 Order Tracking
-            </h3>
-
-
-            <div
-              id="orderTracking"
-              style="
-                margin:20px 0;
-              "
+            <a
+              href="order.html"
+              class="checkout-btn"
             >
-
-              <div
-                style="
-                  padding:15px;
-                  border-radius:10px;
-                  background:#fff3cd;
-                  color:#856404;
-                "
-              >
-
-                🆕 Order Status:
-                <strong>New</strong>
-
-              </div>
-
-            </div>
+              📦 My Orders
+            </a>
 
 
-            <div
-              style="
-                display:flex;
-                gap:12px;
-                justify-content:center;
-                flex-wrap:wrap;
-                margin-top:25px;
-              "
+            <a
+              href="index.html"
+              class="checkout-btn"
             >
-
-              <button
-                class="checkout-btn"
-                onclick="window.location.href='index.html'"
-              >
-                🍽️ Back to Menu
-              </button>
-
-              <button
-                class="checkout-btn"
-                onclick="window.location.href='order.html'"
-              >
-                📦 My Orders
-              </button>
-
-            </div>
-
-
-            <p
-              style="
-                margin-top:20px;
-                font-size:14px;
-                color:#666;
-              "
-            >
-              Order status updates automatically.
-            </p>
+              🍽️ Back to Menu
+            </a>
 
           </div>
 
-        </section>
+        </div>
 
-      </main>
+      </div>
 
-
-      <footer>
-
-        <strong>
-          Thulir Unavagam
-        </strong>
-
-        <p>
-          Fresh food, every day.
-        </p>
-
-        <p>
-          © 2026 Thulir Unavagam.
-          All rights reserved.
-        </p>
-
-      </footer>
-
-    `;
+    </section>
+  `;
 
 
-    // Start automatic tracking
-    startOrderTracking(orderId);
+  // =====================================================
+  // SAVE CURRENT ORDER FOR RECEIPT
+  // =====================================================
 
-  } catch (error) {
+  window.currentOrder = {
 
-    console.error(error);
+    order_id:
+      orderId,
 
-    message.textContent =
-      "❌ " + error.message;
+    customer_name:
+      data.customer_name || "",
+
+    phone:
+      data.phone || "",
+
+    order_type:
+      orderType,
+
+    arrival_time:
+      arrivalTime,
+
+    payment_method:
+      paymentMethod,
+
+    total_amount:
+      total,
+
+    status:
+      data.status || "New",
+
+    items:
+      data.items || []
+
+  };
+
+
+  startOrderTracking(orderId);
+
+}
+
+
+// =====================================================
+// TRACK ORDER
+// =====================================================
+
+let trackingInterval = null;
+
+
+function startOrderTracking(orderId) {
+
+  fetchOrderStatus(orderId);
+
+
+  if (trackingInterval) {
+
+    clearInterval(
+      trackingInterval
+    );
 
   }
 
-});
+
+  trackingInterval =
+    setInterval(() => {
+
+      fetchOrderStatus(orderId);
+
+    }, 5000);
+
+}
 
 
-// ===============================
-// ORDER TRACKING
-// ===============================
-function startOrderTracking(orderId) {
+// =====================================================
+// FETCH ORDER STATUS
+// =====================================================
 
-  async function updateTracking() {
+async function fetchOrderStatus(orderId) {
 
-    try {
+  try {
 
-      const response =
-        await fetch(`/api/orders/${orderId}`);
-
-      const order =
-        await response.json();
+    const response =
+      await fetch(
+        `/api/orders/${orderId}`
+      );
 
 
-      if (!response.ok) {
-        return;
-      }
+    if (!response.ok) {
+      return;
+    }
 
 
-      const tracking =
-        document.getElementById("orderTracking");
+    const data =
+      await response.json();
 
 
-      if (!tracking) {
-        return;
-      }
+    if (!data.success) {
+      return;
+    }
 
 
-      const status =
-        order.status || "New";
+    const order =
+      data.order;
 
 
-      const statusSteps = [
-
-        "New",
-
-        "Accepted",
-
-        "Preparing",
-
-        "Ready",
-
-        "Out for Delivery",
-
-        "Delivered"
-
-      ];
+    const tracking =
+      document.getElementById(
+        "liveOrderTracking"
+      );
 
 
-      let html = "";
+    if (!tracking) {
+      return;
+    }
 
 
-      if (status === "Cancelled") {
+    const statuses = [
+      "New",
+      "Accepted",
+      "Preparing",
+      "Ready",
+      "Completed"
+    ];
 
-        html = `
+
+    const currentIndex =
+      statuses.indexOf(
+        order.status
+      );
+
+
+    let trackerHTML = `
+
+      <h3>
+        Order Status
+      </h3>
+
+      <div class="status-tracker">
+    `;
+
+
+    statuses.forEach(
+      (status, index) => {
+
+        let className = "";
+
+
+        if (index < currentIndex) {
+
+          className =
+            "completed";
+
+        }
+
+
+        if (index === currentIndex) {
+
+          className =
+            "active";
+
+        }
+
+
+        trackerHTML += `
 
           <div
-            style="
-              padding:18px;
-              border-radius:10px;
-              background:#f8d7da;
-              color:#842029;
-              font-weight:600;
-            "
+            class="status-step ${className}"
           >
 
-            ❌ Order Cancelled
+            <div class="status-circle">
+
+              ${
+                index < currentIndex
+                  ? "✓"
+                  : index + 1
+              }
+
+            </div>
+
+            <span>
+              ${status}
+            </span>
 
           </div>
 
         `;
 
-      } else {
-
-        const currentIndex =
-          statusSteps.indexOf(status);
-
-        statusSteps.forEach((step, index) => {
-
-          let background = "#eeeeee";
-          let textColor = "#777";
-
-          if (index <= currentIndex) {
-
-            background = "#198754";
-            textColor = "#ffffff";
-
-          }
-
-          html += `
-
-            <div
-              style="
-                display:flex;
-                align-items:center;
-                gap:10px;
-                margin:8px 0;
-                padding:10px;
-                border-radius:8px;
-                background:${background};
-                color:${textColor};
-                font-weight:600;
-              "
-            >
-
-              <span>
-                ${index <= currentIndex ? "✓" : "○"}
-              </span>
-
-              <span>
-                ${step}
-              </span>
-
-            </div>
-
-          `;
-
-        });
-
       }
+    );
 
 
-      tracking.innerHTML = html;
+    trackerHTML += `
 
-    } catch (error) {
+      </div>
 
-      console.error(
-        "Tracking error:",
-        error
+      <p class="current-status">
+
+        Current Status:
+
+        <strong>
+          ${escapeHtml(order.status)}
+        </strong>
+
+      </p>
+
+    `;
+
+
+    if (order.status === "Cancelled") {
+
+      trackerHTML += `
+
+        <div class="cancelled-message">
+
+          ❌
+          This order has been cancelled.
+
+        </div>
+
+      `;
+
+
+      clearInterval(
+        trackingInterval
       );
 
     }
 
+
+    if (order.status === "Completed") {
+
+      trackerHTML += `
+
+        <div class="completed-message">
+
+          🎉
+          Your order is completed.
+
+          Thank you for visiting
+          Thulir Unavagam!
+
+        </div>
+
+      `;
+
+
+      clearInterval(
+        trackingInterval
+      );
+
+    }
+
+
+    tracking.innerHTML =
+      trackerHTML;
+
+
+    // =================================================
+    // UPDATE RECEIPT DATA
+    // =================================================
+
+    if (window.currentOrder) {
+
+      window.currentOrder.status =
+        order.status;
+
+    }
+
+
+  } catch (error) {
+
+    console.error(
+      "TRACKING ERROR:",
+      error
+    );
+
   }
-
-
-  updateTracking();
-
-
-  setInterval(
-    updateTracking,
-    5000
-  );
 
 }
 
 
-// ===============================
+// =====================================================
 // PRINT RECEIPT
-// ===============================
+// =====================================================
+
 function printReceipt() {
 
-  const receipt =
-    document.getElementById("receipt");
+  const order =
+    window.currentOrder;
 
-  if (!receipt) {
+
+  if (!order) {
     return;
   }
+
 
   const printWindow =
     window.open(
@@ -798,6 +985,7 @@ function printReceipt() {
       "_blank",
       "width=800,height=900"
     );
+
 
   if (!printWindow) {
 
@@ -809,6 +997,52 @@ function printReceipt() {
   }
 
 
+  const receiptItems =
+    order.items || [];
+
+
+  let itemsHTML = "";
+
+
+  receiptItems.forEach(item => {
+
+    const price =
+      Number(item.price || 0);
+
+    const qty =
+      Number(item.qty || 0);
+
+    const itemTotal =
+      price * qty;
+
+
+    itemsHTML += `
+
+      <tr>
+
+        <td>
+          ${escapeHtml(item.name)}
+        </td>
+
+        <td>
+          ${qty}
+        </td>
+
+        <td>
+          ₹${price.toFixed(2)}
+        </td>
+
+        <td>
+          ₹${itemTotal.toFixed(2)}
+        </td>
+
+      </tr>
+
+    `;
+
+  });
+
+
   printWindow.document.write(`
 
     <!DOCTYPE html>
@@ -818,7 +1052,7 @@ function printReceipt() {
     <head>
 
       <title>
-        Thulir Unavagam - Order Receipt
+        Thulir Unavagam Receipt
       </title>
 
       <style>
@@ -829,36 +1063,175 @@ function printReceipt() {
           color: #222;
         }
 
+        .receipt {
+          max-width: 700px;
+          margin: auto;
+        }
+
+        h1 {
+          text-align: center;
+          margin-bottom: 5px;
+        }
+
+        .subtitle {
+          text-align: center;
+          color: #666;
+        }
+
+        .line {
+          border-top: 1px solid #ccc;
+          margin: 20px 0;
+        }
+
+        .details {
+          margin: 15px 0;
+        }
+
+        .details p {
+          margin: 7px 0;
+        }
+
         table {
           width: 100%;
           border-collapse: collapse;
+          margin-top: 20px;
         }
 
         th,
         td {
-          padding: 10px;
           border-bottom: 1px solid #ddd;
+          padding: 10px;
+          text-align: left;
         }
 
-        th {
-          background: #f5f5f5;
+        .total {
+          text-align: right;
+          font-size: 20px;
+          font-weight: bold;
+          margin-top: 20px;
         }
 
-        @media print {
-
-          body {
-            padding: 10px;
-          }
-
+        .footer {
+          text-align: center;
+          margin-top: 40px;
+          color: #666;
         }
 
       </style>
 
     </head>
 
+
     <body>
 
-      ${receipt.innerHTML}
+      <div class="receipt">
+
+        <h1>
+          Thulir Unavagam
+        </h1>
+
+        <div class="subtitle">
+          Fresh food, every day.
+        </div>
+
+
+        <div class="line"></div>
+
+
+        <div class="details">
+
+          <p>
+            <strong>Order No:</strong>
+            #${order.order_id}
+          </p>
+
+          <p>
+            <strong>Customer:</strong>
+            ${escapeHtml(order.customer_name)}
+          </p>
+
+          <p>
+            <strong>Phone:</strong>
+            ${escapeHtml(order.phone)}
+          </p>
+
+          <p>
+            <strong>Order Type:</strong>
+            ${escapeHtml(order.order_type)}
+          </p>
+
+          <p>
+            <strong>Expected Arrival:</strong>
+            ${escapeHtml(order.arrival_time)}
+          </p>
+
+          <p>
+            <strong>Payment:</strong>
+            ${escapeHtml(order.payment_method)}
+          </p>
+
+          <p>
+            <strong>Status:</strong>
+            ${escapeHtml(order.status || "New")}
+          </p>
+
+        </div>
+
+
+        <table>
+
+          <thead>
+
+            <tr>
+
+              <th>Item</th>
+              <th>Qty</th>
+              <th>Price</th>
+              <th>Total</th>
+
+            </tr>
+
+          </thead>
+
+
+          <tbody>
+
+            ${itemsHTML}
+
+          </tbody>
+
+        </table>
+
+
+        <div class="total">
+
+          Total:
+          ₹${Number(
+            order.total_amount || 0
+          ).toFixed(2)}
+
+        </div>
+
+
+        <div class="footer">
+
+          Thank you for choosing
+          Thulir Unavagam! ❤️
+
+        </div>
+
+      </div>
+
+
+      <script>
+
+        window.onload = function() {
+
+          window.print();
+
+        };
+
+      <\/script>
 
     </body>
 
@@ -866,29 +1239,71 @@ function printReceipt() {
 
   `);
 
+
   printWindow.document.close();
-
-  printWindow.focus();
-
-  setTimeout(() => {
-
-    printWindow.print();
-
-  }, 300);
 
 }
 
 
-// ===============================
+// =====================================================
+// MESSAGE
+// =====================================================
+
+function showMessage(
+  text,
+  type = "info"
+) {
+
+  const message =
+    document.getElementById(
+      "checkoutMessage"
+    );
+
+
+  if (!message) return;
+
+
+  message.textContent =
+    text;
+
+
+  message.className =
+    `message-${type}`;
+
+}
+
+
+// =====================================================
 // ESCAPE HTML
-// ===============================
+// =====================================================
+
 function escapeHtml(value) {
 
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+  return String(value || "")
+
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+
+    .replace(
+      /</g,
+      "&lt;"
+    )
+
+    .replace(
+      />/g,
+      "&gt;"
+    )
+
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+
+    .replace(
+      /'/g,
+      "&#039;"
+    );
 
 }
