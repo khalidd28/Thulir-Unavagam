@@ -3,6 +3,7 @@ require("dotenv").config();
 const express = require("express");
 const path = require("path");
 const crypto = require("crypto");
+const webpush = require("web-push");
 const db = require("./db");
 
 const app = express();
@@ -15,6 +16,16 @@ const PORT = Number(process.env.PORT) || 5000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+/* =========================================================
+   WEB PUSH CONFIGURATION
+   ========================================================= */
+
+webpush.setVapidDetails(
+  process.env.VAPID_SUBJECT,
+  process.env.VAPID_PUBLIC_KEY,
+  process.env.VAPID_PRIVATE_KEY
+);
 
 /* =========================================================
    ADMIN SESSION SYSTEM
@@ -219,6 +230,220 @@ app.get("/api/menu", async (req, res) => {
 });
 
 /* =========================================================
+   PUSH NOTIFICATION - GET PUBLIC VAPID KEY
+   ========================================================= */
+
+app.get("/api/notifications/public-key", (req, res) => {
+
+  res.json({
+    success: true,
+    publicKey: process.env.VAPID_PUBLIC_KEY
+  });
+
+});
+
+/* =========================================================
+   PUSH NOTIFICATION - SAVE CUSTOMER SUBSCRIPTION
+   ========================================================= */
+
+app.post("/api/notifications/subscribe", async (req, res) => {
+
+  try {
+
+    const { endpoint, keys } = req.body;
+
+    if (
+      !endpoint ||
+      !keys ||
+      !keys.p256dh ||
+      !keys.auth
+    ) {
+
+      return res.status(400).json({
+        success: false,
+        message: "Invalid notification subscription."
+      });
+
+    }
+
+    /* ---------------------------------------------
+       Avoid duplicate subscriptions
+       --------------------------------------------- */
+
+    const [existing] = await db.query(
+      `
+      SELECT id
+      FROM push_subscriptions
+      WHERE endpoint = ?
+      LIMIT 1
+      `,
+      [endpoint]
+    );
+
+    if (existing.length) {
+
+      await db.query(
+        `
+        UPDATE push_subscriptions
+        SET
+          p256dh = ?,
+          auth = ?
+        WHERE endpoint = ?
+        `,
+        [
+          keys.p256dh,
+          keys.auth,
+          endpoint
+        ]
+      );
+
+    } else {
+
+      await db.query(
+        `
+        INSERT INTO push_subscriptions
+        (
+          endpoint,
+          p256dh,
+          auth
+        )
+        VALUES (?, ?, ?)
+        `,
+        [
+          endpoint,
+          keys.p256dh,
+          keys.auth
+        ]
+      );
+
+    }
+
+    res.json({
+      success: true,
+      message: "Notifications enabled successfully."
+    });
+
+  } catch (error) {
+
+    console.error(
+      "SUBSCRIPTION ERROR:",
+      error
+    );
+
+    res.status(500).json({
+      success: false,
+      message:
+        "Unable to save notification subscription."
+    });
+
+  }
+
+});
+
+/* =========================================================
+   PUSH NOTIFICATION - SEND TO ALL CUSTOMERS
+   ========================================================= */
+
+async function sendMenuNotification() {
+
+  try {
+
+    const [subscriptions] =
+      await db.query(`
+        SELECT
+          id,
+          endpoint,
+          p256dh,
+          auth
+        FROM push_subscriptions
+      `);
+
+    if (!subscriptions.length) {
+
+      console.log(
+        "NO PUSH SUBSCRIPTIONS FOUND."
+      );
+
+      return;
+
+    }
+
+    const payload = JSON.stringify({
+      title: "🔔 Thulir Unavagam",
+      body:
+        "Today's menu is now available! Check the latest dishes.",
+      url: "/"
+    });
+
+    for (const subscription of subscriptions) {
+
+      const pushSubscription = {
+        endpoint: subscription.endpoint,
+
+        keys: {
+          p256dh: subscription.p256dh,
+          auth: subscription.auth
+        }
+
+      };
+
+      try {
+
+        await webpush.sendNotification(
+          pushSubscription,
+          payload
+        );
+
+        console.log(
+          `PUSH SENT TO SUBSCRIPTION ${subscription.id}`
+        );
+
+      } catch (pushError) {
+
+        console.error(
+          `PUSH ERROR FOR SUBSCRIPTION ${subscription.id}:`,
+          pushError.statusCode || pushError.message
+        );
+
+        /*
+         Remove expired/invalid subscriptions.
+         */
+
+        if (
+          pushError.statusCode === 404 ||
+          pushError.statusCode === 410
+        ) {
+
+          await db.query(
+            `
+            DELETE FROM push_subscriptions
+            WHERE id = ?
+            `,
+            [subscription.id]
+          );
+
+          console.log(
+            `REMOVED INVALID SUBSCRIPTION ${subscription.id}`
+          );
+
+        }
+
+      }
+
+    }
+
+  } catch (error) {
+
+    console.error(
+      "SEND MENU NOTIFICATION ERROR:",
+      error
+    );
+
+  }
+
+}
+
+/* =========================================================
    PLACE CUSTOMER ORDER
    ========================================================= */
 
@@ -260,7 +485,8 @@ app.post("/api/orders", async (req, res) => {
     if (!/^\d{10}$/.test(phone)) {
       return res.status(400).json({
         success: false,
-        message: "Please enter a valid 10-digit phone number."
+        message:
+          "Please enter a valid 10-digit phone number."
       });
     }
 
@@ -270,28 +496,32 @@ app.post("/api/orders", async (req, res) => {
     ) {
       return res.status(400).json({
         success: false,
-        message: "Please select Dine-in or Parcel."
+        message:
+          "Please select Dine-in or Parcel."
       });
     }
 
     if (!arrivalTime) {
       return res.status(400).json({
         success: false,
-        message: "Expected arrival time is required."
+        message:
+          "Expected arrival time is required."
       });
     }
 
     if (!/^\d{2}:\d{2}$/.test(arrivalTime)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid arrival time."
+        message:
+          "Invalid arrival time."
       });
     }
 
     if (!items.length) {
       return res.status(400).json({
         success: false,
-        message: "Your cart is empty."
+        message:
+          "Your cart is empty."
       });
     }
 
@@ -317,23 +547,25 @@ app.post("/api/orders", async (req, res) => {
 
         return res.status(400).json({
           success: false,
-          message: "Invalid food item or quantity."
+          message:
+            "Invalid food item or quantity."
         });
       }
 
-      const [foodRows] = await connection.query(
-        `
-        SELECT
-          id,
-          name,
-          price
-        FROM food_items
-        WHERE id = ?
-        AND menu_date = CURDATE()
-        AND is_available = TRUE
-        `,
-        [foodId]
-      );
+      const [foodRows] =
+        await connection.query(
+          `
+          SELECT
+            id,
+            name,
+            price
+          FROM food_items
+          WHERE id = ?
+          AND menu_date = CURDATE()
+          AND is_available = TRUE
+          `,
+          [foodId]
+        );
 
       if (!foodRows.length) {
 
@@ -359,6 +591,7 @@ app.post("/api/orders", async (req, res) => {
         price: Number(food.price),
         quantity
       });
+
     }
 
     const [orderResult] =
@@ -407,22 +640,43 @@ app.post("/api/orders", async (req, res) => {
           item.price
         ]
       );
+
     }
 
     await connection.commit();
 
     res.status(201).json({
+
       success: true,
-      message: "Order placed successfully.",
-      order_id: orderId,
-      customer_name: customerName,
+
+      message:
+        "Order placed successfully.",
+
+      order_id:
+        orderId,
+
+      customer_name:
+        customerName,
+
       phone,
-      order_type: orderType,
-      arrival_time: arrivalTime,
-      payment_method: paymentMethod,
+
+      order_type:
+        orderType,
+
+      arrival_time:
+        arrivalTime,
+
+      payment_method:
+        paymentMethod,
+
       total_amount:
-        Number(totalAmount.toFixed(2)),
-      status: "New"
+        Number(
+          totalAmount.toFixed(2)
+        ),
+
+      status:
+        "New"
+
     });
 
   } catch (error) {
@@ -436,13 +690,16 @@ app.post("/api/orders", async (req, res) => {
 
     res.status(500).json({
       success: false,
-      message: "Unable to place your order."
+      message:
+        "Unable to place your order."
     });
 
   } finally {
 
     connection.release();
+
   }
+
 });
 
 /* =========================================================
@@ -457,10 +714,13 @@ app.get("/api/orders/:id", async (req, res) => {
       Number(req.params.id);
 
     if (!Number.isInteger(orderId)) {
+
       return res.status(400).json({
         success: false,
-        message: "Invalid order number."
+        message:
+          "Invalid order number."
       });
+
     }
 
     const [orders] =
@@ -482,10 +742,13 @@ app.get("/api/orders/:id", async (req, res) => {
       );
 
     if (!orders.length) {
+
       return res.status(404).json({
         success: false,
-        message: "Order not found."
+        message:
+          "Order not found."
       });
+
     }
 
     const order = orders[0];
@@ -522,9 +785,12 @@ app.get("/api/orders/:id", async (req, res) => {
 
     res.status(500).json({
       success: false,
-      message: "Unable to load order."
+      message:
+        "Unable to load order."
     });
+
   }
+
 });
 
 /* =========================================================
@@ -539,11 +805,13 @@ app.get("/api/my-orders/:phone", async (req, res) => {
       String(req.params.phone || "").trim();
 
     if (!/^\d{10}$/.test(phone)) {
+
       return res.status(400).json({
         success: false,
         message:
           "Please enter a valid 10-digit phone number."
       });
+
     }
 
     const [orders] =
@@ -584,12 +852,14 @@ app.get("/api/my-orders/:phone", async (req, res) => {
         );
 
       order.items = items;
+
     }
 
     res.json({
       success: true,
       phone,
-      total_orders: orders.length,
+      total_orders:
+        orders.length,
       orders
     });
 
@@ -602,9 +872,12 @@ app.get("/api/my-orders/:phone", async (req, res) => {
 
     res.status(500).json({
       success: false,
-      message: "Unable to load your orders."
+      message:
+        "Unable to load your orders."
     });
+
   }
+
 });
 
 /* =========================================================
@@ -653,6 +926,7 @@ app.get(
           );
 
         order.items = items;
+
       }
 
       res.json(orders);
@@ -669,7 +943,9 @@ app.get(
         message:
           "Unable to load customer orders."
       });
+
     }
+
   }
 );
 
@@ -688,7 +964,9 @@ app.patch(
         Number(req.params.id);
 
       const status =
-        String(req.body.status || "").trim();
+        String(
+          req.body.status || ""
+        ).trim();
 
       const allowedStatuses = [
         "New",
@@ -700,19 +978,23 @@ app.patch(
       ];
 
       if (!Number.isInteger(orderId)) {
+
         return res.status(400).json({
           success: false,
           message:
             "Invalid order number."
         });
+
       }
 
       if (!allowedStatuses.includes(status)) {
+
         return res.status(400).json({
           success: false,
           message:
             "Invalid order status."
         });
+
       }
 
       const [result] =
@@ -722,23 +1004,34 @@ app.patch(
           SET status = ?
           WHERE id = ?
           `,
-          [status, orderId]
+          [
+            status,
+            orderId
+          ]
         );
 
       if (result.affectedRows === 0) {
+
         return res.status(404).json({
           success: false,
           message:
             "Order not found."
         });
+
       }
 
       res.json({
+
         success: true,
+
         message:
           "Order status updated successfully.",
-        order_id: orderId,
+
+        order_id:
+          orderId,
+
         status
+
       });
 
     } catch (error) {
@@ -753,7 +1046,9 @@ app.patch(
         message:
           "Unable to update order status."
       });
+
     }
+
   }
 );
 
@@ -769,7 +1064,9 @@ app.get(
     try {
 
       const date =
-        String(req.query.date || "").trim();
+        String(
+          req.query.date || ""
+        ).trim();
 
       const selectedDate =
         /^\d{4}-\d{2}-\d{2}$/.test(date)
@@ -777,10 +1074,6 @@ app.get(
           : new Date()
               .toISOString()
               .slice(0, 10);
-
-      /* ---------------------------------------------
-         DATE SUMMARY
-         --------------------------------------------- */
 
       const [dateSummaryRows] =
         await db.query(
@@ -803,10 +1096,6 @@ app.get(
           totalOrders: 0,
           totalSales: 0
         };
-
-      /* ---------------------------------------------
-         CATEGORY SALES
-         --------------------------------------------- */
 
       const [categoryRows] =
         await db.query(
@@ -857,11 +1146,8 @@ app.get(
           [selectedDate]
         );
 
-      /* ---------------------------------------------
-         ALWAYS RETURN ALL FOUR CATEGORIES
-         --------------------------------------------- */
-
       const categoryMap = {
+
         Breakfast: {
           quantitySold: 0,
           sales: 0
@@ -881,6 +1167,7 @@ app.get(
           quantitySold: 0,
           sales: 0
         }
+
       };
 
       categoryRows.forEach(row => {
@@ -888,57 +1175,82 @@ app.get(
         if (categoryMap[row.category]) {
 
           categoryMap[row.category] = {
+
             quantitySold:
-              Number(row.quantitySold || 0),
+              Number(
+                row.quantitySold || 0
+              ),
 
             sales:
-              Number(row.sales || 0)
+              Number(
+                row.sales || 0
+              )
+
           };
+
         }
+
       });
 
-      /* ---------------------------------------------
-         CONVERT TO ARRAY
-         IMPORTANT FOR FRONTEND
-         --------------------------------------------- */
-
       const categories = [
+
         {
-          category: "Breakfast",
+          category:
+            "Breakfast",
+
+          quantity:
+            categoryMap.Breakfast.quantitySold,
+
           quantitySold:
             categoryMap.Breakfast.quantitySold,
+
           sales:
             categoryMap.Breakfast.sales
         },
 
         {
-          category: "Snacks",
+          category:
+            "Snacks",
+
+          quantity:
+            categoryMap.Snacks.quantitySold,
+
           quantitySold:
             categoryMap.Snacks.quantitySold,
+
           sales:
             categoryMap.Snacks.sales
         },
 
         {
-          category: "Lunch",
+          category:
+            "Lunch",
+
+          quantity:
+            categoryMap.Lunch.quantitySold,
+
           quantitySold:
             categoryMap.Lunch.quantitySold,
+
           sales:
             categoryMap.Lunch.sales
         },
 
         {
-          category: "Dinner",
+          category:
+            "Dinner",
+
+          quantity:
+            categoryMap.Dinner.quantitySold,
+
           quantitySold:
             categoryMap.Dinner.quantitySold,
+
           sales:
             categoryMap.Dinner.sales
         }
-      ];
 
-      /* ---------------------------------------------
-         MONTHLY SALES
-         --------------------------------------------- */
+      ];
 
       const [monthlyRows] =
         await db.query(
@@ -973,10 +1285,6 @@ app.get(
           `
         );
 
-      /* ---------------------------------------------
-         CURRENT MONTH SALES
-         --------------------------------------------- */
-
       const [currentMonthRows] =
         await db.query(
           `
@@ -1001,10 +1309,6 @@ app.get(
           `
         );
 
-      /* ---------------------------------------------
-         SELECTED DATE ORDERS
-         --------------------------------------------- */
-
       const [dateOrders] =
         await db.query(
           `
@@ -1024,17 +1328,15 @@ app.get(
           [selectedDate]
         );
 
-      /* ---------------------------------------------
-         FINAL RESPONSE
-         --------------------------------------------- */
-
       res.json({
 
         success: true,
 
-        date: selectedDate,
+        date:
+          selectedDate,
 
         dateSummary: {
+
           totalOrders:
             Number(
               dateSummary.totalOrders || 0
@@ -1044,15 +1346,14 @@ app.get(
             Number(
               dateSummary.totalSales || 0
             )
+
         },
 
-        /* Frontend uses this */
         categories,
 
-        /* Keep categorySales also for compatibility */
-        categorySales: categories,
+        categorySales:
+          categories,
 
-        /* Breakfast compatibility */
         breakfast:
           categories.find(
             item =>
@@ -1064,11 +1365,20 @@ app.get(
 
         monthly:
           monthlyRows.map(row => ({
-            month: row.month,
+
+            month:
+              row.month,
+
             totalOrders:
-              Number(row.totalOrders || 0),
+              Number(
+                row.totalOrders || 0
+              ),
+
             totalSales:
-              Number(row.totalSales || 0)
+              Number(
+                row.totalSales || 0
+              )
+
           })),
 
         currentMonthSales:
@@ -1097,7 +1407,9 @@ app.get(
         message:
           "Unable to load analytics."
       });
+
     }
+
   }
 );
 
@@ -1114,7 +1426,9 @@ app.get(
     try {
 
       const month =
-        String(req.query.month || "").trim();
+        String(
+          req.query.month || ""
+        ).trim();
 
       if (
         !month ||
@@ -1126,11 +1440,8 @@ app.get(
           message:
             "Invalid month. Use YYYY-MM."
         });
-      }
 
-      /* ---------------------------------------------
-         TOTAL MONTHLY SALES
-         --------------------------------------------- */
+      }
 
       const [summaryRows] =
         await db.query(
@@ -1161,10 +1472,6 @@ app.get(
           totalOrders: 0,
           totalSales: 0
         };
-
-      /* ---------------------------------------------
-         CATEGORY SALES
-         --------------------------------------------- */
 
       const [categoryRows] =
         await db.query(
@@ -1219,10 +1526,6 @@ app.get(
           [month]
         );
 
-      /* ---------------------------------------------
-         ALL FOUR CATEGORIES
-         --------------------------------------------- */
-
       const categoryMap = {
 
         Breakfast: {
@@ -1254,18 +1557,20 @@ app.get(
           categoryMap[row.category] = {
 
             quantity:
-              Number(row.quantity || 0),
+              Number(
+                row.quantity || 0
+              ),
 
             sales:
-              Number(row.sales || 0)
+              Number(
+                row.sales || 0
+              )
 
           };
-        }
-      });
 
-      /* ---------------------------------------------
-         RESPONSE
-         --------------------------------------------- */
+        }
+
+      });
 
       res.json({
 
@@ -1283,40 +1588,55 @@ app.get(
             summary.totalSales || 0
           ),
 
-        categories: categoryMap,
+        categories:
+          categoryMap,
 
         categorySales: [
+
           {
-            category: "Breakfast",
+            category:
+              "Breakfast",
+
             quantity:
               categoryMap.Breakfast.quantity,
+
             sales:
               categoryMap.Breakfast.sales
           },
 
           {
-            category: "Snacks",
+            category:
+              "Snacks",
+
             quantity:
               categoryMap.Snacks.quantity,
+
             sales:
               categoryMap.Snacks.sales
           },
 
           {
-            category: "Lunch",
+            category:
+              "Lunch",
+
             quantity:
               categoryMap.Lunch.quantity,
+
             sales:
               categoryMap.Lunch.sales
           },
 
           {
-            category: "Dinner",
+            category:
+              "Dinner",
+
             quantity:
               categoryMap.Dinner.quantity,
+
             sales:
               categoryMap.Dinner.sales
           }
+
         ]
 
       });
@@ -1329,13 +1649,19 @@ app.get(
       );
 
       res.status(500).json({
+
         success: false,
+
         message:
           "Unable to load monthly analytics.",
+
         error:
           error.message
+
       });
+
     }
+
   }
 );
 
@@ -1383,30 +1709,36 @@ app.post(
       ];
 
       if (!menuDate || !name) {
+
         return res.status(400).json({
           success: false,
           message:
             "Menu date and food name are required."
         });
+
       }
 
       if (!allowedCategories.includes(category)) {
+
         return res.status(400).json({
           success: false,
           message:
             "Invalid meal category."
         });
+
       }
 
       if (
         !Number.isFinite(price) ||
         price <= 0
       ) {
+
         return res.status(400).json({
           success: false,
           message:
             "Please enter a valid price."
         });
+
       }
 
       await db.query(
@@ -1431,10 +1763,43 @@ app.post(
         ]
       );
 
+      /*
+       * Send notification only when today's menu
+       * is being added.
+       */
+
+      let notificationSent = false;
+
+      const [todayRows] =
+        await db.query(
+          `
+          SELECT
+            CURDATE() AS today
+          `
+        );
+
+      const today =
+        todayRows[0]?.today
+          ?.toISOString()
+          ?.slice(0, 10);
+
+      if (menuDate === today) {
+
+        await sendMenuNotification();
+
+        notificationSent = true;
+
+      }
+
       res.status(201).json({
+
         success: true,
+
         message:
-          "Menu item added successfully."
+          "Menu item added successfully.",
+
+        notificationSent
+
       });
 
     } catch (error) {
@@ -1449,7 +1814,9 @@ app.post(
         message:
           "Unable to add menu item."
       });
+
     }
+
   }
 );
 
@@ -1501,7 +1868,9 @@ app.get(
         message:
           "Unable to load menu."
       });
+
     }
+
   }
 );
 
@@ -1552,38 +1921,46 @@ app.put(
       ];
 
       if (!Number.isInteger(foodId)) {
+
         return res.status(400).json({
           success: false,
           message:
             "Invalid food item."
         });
+
       }
 
       if (!name || !menuDate) {
+
         return res.status(400).json({
           success: false,
           message:
             "Food name and menu date are required."
         });
+
       }
 
       if (!allowedCategories.includes(category)) {
+
         return res.status(400).json({
           success: false,
           message:
             "Invalid meal category."
         });
+
       }
 
       if (
         !Number.isFinite(price) ||
         price <= 0
       ) {
+
         return res.status(400).json({
           success: false,
           message:
             "Invalid price."
         });
+
       }
 
       const [result] =
@@ -1611,11 +1988,13 @@ app.put(
         );
 
       if (result.affectedRows === 0) {
+
         return res.status(404).json({
           success: false,
           message:
             "Menu item not found."
         });
+
       }
 
       res.json({
@@ -1636,7 +2015,9 @@ app.put(
         message:
           "Unable to update menu item."
       });
+
     }
+
   }
 );
 
@@ -1655,11 +2036,13 @@ app.delete(
         Number(req.params.id);
 
       if (!Number.isInteger(foodId)) {
+
         return res.status(400).json({
           success: false,
           message:
             "Invalid food item."
         });
+
       }
 
       try {
@@ -1674,11 +2057,13 @@ app.delete(
           );
 
         if (result.affectedRows === 0) {
+
           return res.status(404).json({
             success: false,
             message:
               "Menu item not found."
           });
+
         }
 
         return res.json({
@@ -1706,13 +2091,18 @@ app.delete(
           );
 
           return res.json({
+
             success: true,
+
             message:
               "This item has existing orders, so it was marked unavailable instead of deleted."
+
           });
+
         }
 
         throw deleteError;
+
       }
 
     } catch (error) {
@@ -1727,7 +2117,9 @@ app.delete(
         message:
           "Unable to delete menu item."
       });
+
     }
+
   }
 );
 
@@ -1749,11 +2141,13 @@ app.patch(
         Boolean(req.body.available);
 
       if (!Number.isInteger(foodId)) {
+
         return res.status(400).json({
           success: false,
           message:
             "Invalid food item."
         });
+
       }
 
       const [result] =
@@ -1772,19 +2166,24 @@ app.patch(
         );
 
       if (result.affectedRows === 0) {
+
         return res.status(404).json({
           success: false,
           message:
             "Menu item not found."
         });
+
       }
 
       res.json({
+
         success: true,
+
         message:
           available
             ? "Menu item is now available."
             : "Menu item is now unavailable."
+
       });
 
     } catch (error) {
@@ -1799,7 +2198,9 @@ app.patch(
         message:
           "Unable to update menu availability."
       });
+
     }
+
   }
 );
 
@@ -1826,6 +2227,7 @@ app.get("/", (req, res) => {
       "index.html"
     )
   );
+
 });
 
 /* =========================================================
