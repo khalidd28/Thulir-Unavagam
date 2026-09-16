@@ -1,5 +1,6 @@
 let menu = [];
-
+let selectedCategory = "All";
+let searchText = "";
 let cart =
   JSON.parse(localStorage.getItem("thulirCart")) || [];
 
@@ -84,24 +85,78 @@ async function loadMenu() {
 // ==========================================
 // GET FOOD IMAGE
 // ==========================================
-
 function getFoodImage(foodName) {
 
-  const name =
-    foodName
-      .toLowerCase()
-      .trim();
+  const name = String(foodName || "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ");
 
-  return (
-    foodImages[name] ||
-    "assets/food/idli.jpg"
-  );
+  if (name.includes("idli")) {
+    return "assets/food/idli.jpg";
+  }
 
+  if (name.includes("dosa")) {
+    return "assets/food/dosa.jpg";
+  }
+
+  if (name.includes("chapati") || name.includes("chapathi")) {
+    return "assets/food/chapati.jpg";
+  }
+
+  if (name.includes("poori") || name.includes("puri")) {
+    return "assets/food/poori.jpg";
+  }
+
+  if (name.includes("pongal")) {
+    return "assets/food/pongal.jpg";
+  }
+
+  if (name.includes("vada")) {
+    return "assets/food/vada.jpg";
+  }
+
+  if (name.includes("egg rice") || name.includes("egg-rice")) {
+    return "assets/food/egg-rice.jpg";
+  }
+
+  if (name.includes("egg noodles") || name.includes("egg-noodles")) {
+    return "assets/food/egg-noodles.jpg";
+  }
+
+  if (name.includes("semiya biryani") || name.includes("semiya-biryani")) {
+    return "assets/food/semiya-biryani.jpg";
+  }
+
+  if (name.includes("empty biryani") || name.includes("empty-biryani")) {
+    return "assets/food/empty-biryani.jpg";
+  }
+
+  if (name.includes("biryani")) {
+    return "assets/food/biryani.jpg";
+  }
+
+  if (name.includes("tomato rice") || name.includes("tomato-rice")) {
+    return "assets/food/tomato-rice.jpg";
+  }
+
+  if (
+    name.includes("malli rice") ||
+    name.includes("malli-rice") ||
+    name.includes("coriander rice")
+  ) {
+    return "assets/food/malli-rice.jpg";
+  }
+
+  if (name.includes("meals")) {
+    return "assets/food/meals.jpg";
+  }
+
+  return "assets/food/idli.jpg";
 }
 
-
 // ==========================================
-// DISPLAY MENU
+// RENDER MENU
 // ==========================================
 
 function renderMenu() {
@@ -113,138 +168,191 @@ function renderMenu() {
     return;
   }
 
-  if (!menu.length) {
+  const filteredMenu = menu.filter(item => {
 
-    container.innerHTML =
-      "<p>No items available today.</p>";
+    const matchesCategory =
+      selectedCategory === "All" ||
+      item.meal_type === selectedCategory ||
+      item.category === selectedCategory;
+
+    const matchesSearch =
+      !searchText ||
+      String(item.name || "")
+        .toLowerCase()
+        .includes(searchText) ||
+      String(item.description || "")
+        .toLowerCase()
+        .includes(searchText);
+
+    return matchesCategory && matchesSearch;
+  });
+
+
+  if (filteredMenu.length === 0) {
+
+    container.innerHTML = `
+      <div class="no-menu-message">
+        <div style="font-size:45px;">🍽️</div>
+        <h3>No food found</h3>
+        <p>Try another food name or category.</p>
+      </div>
+    `;
 
     return;
-
   }
 
-  const categories = [
+
+  const grouped = {};
+
+  filteredMenu.forEach(item => {
+
+    const category =
+      item.meal_type ||
+      item.category ||
+      "Other";
+
+    if (!grouped[category]) {
+      grouped[category] = [];
+    }
+
+    grouped[category].push(item);
+
+  });
+
+
+  const categoryOrder = [
     "Breakfast",
     "Lunch",
     "Dinner",
     "Tea & Snacks"
   ];
 
-  container.innerHTML =
-    categories
-      .map(category => {
 
-        const items =
-          menu.filter(
-            item =>
-              item.meal_type === category
-          );
+  let html = "";
 
-        if (!items.length) {
-          return "";
-        }
 
-        return `
+  categoryOrder.forEach(category => {
 
-          <div class="category">
+    if (!grouped[category]) {
+      return;
+    }
 
-            <h3>${escapeHtml(category)}</h3>
 
-            <div class="cards">
+    html += `
+      <div class="menu-category">
 
-              ${items
-                .map(item => {
+        <h3 class="menu-category-title">
+          ${
+            category === "Tea & Snacks"
+              ? "☕ Snacks"
+              : category
+          }
+        </h3>
 
-                  const image =
-                    getFoodImage(item.name);
+        <div class="menu-grid">
+    `;
 
-                  return `
 
-                    <div class="card">
+    grouped[category].forEach(item => {
 
-                      <img
-                        src="${image}"
-                        alt="${escapeHtml(item.name)}"
-                        class="food-image"
-                      >
+      const image =
+        getFoodImage(item.name);
 
-                      <div class="card-content">
+      const foodId =
+        Number(item.food_id || item.id);
 
-                        <h4>
-                          ${escapeHtml(item.name)}
-                        </h4>
+      const foodName =
+        escapeHtml(item.name || "");
 
-                        <p>
-                          ${
-                            escapeHtml(
-                              item.description ||
-                              "Freshly prepared at Thulir Unavagam."
-                            )
-                          }
-                        </p>
+      const foodPrice =
+        Number(item.price || 0);
 
-                        <div class="card-bottom">
 
-                          <div class="price">
-                            ₹${Number(
-                              item.price
-                            ).toFixed(0)}
-                          </div>
+      html += `
+        <div class="food-card">
 
-                          <button
-                            class="add"
-                            onclick="addToCart(${item.food_id})"
-                          >
-                            Add to Cart
-                          </button>
+          <img
+            src="${image}"
+            alt="${foodName}"
+            class="food-image"
+            onerror="this.style.display='none'"
+          >
 
-                        </div>
+          <div class="food-card-content">
 
-                      </div>
+            <h3>
+              ${foodName}
+            </h3>
 
-                    </div>
+            <p class="food-description">
+              ${escapeHtml(item.description || "")}
+            </p>
 
-                  `;
+            <div class="food-card-bottom">
 
-                })
-                .join("")}
+              <strong class="food-price">
+                ₹${foodPrice.toFixed(2)}
+              </strong>
+
+              <button
+                class="add-cart-btn"
+                onclick="addToCart(
+                  ${foodId},
+                  '${String(item.name || "")
+                    .replace(/\\/g, "\\\\")
+                    .replace(/'/g, "\\'")}',
+                  ${foodPrice}
+                )"
+              >
+                🛒 Add
+              </button>
 
             </div>
 
           </div>
 
-        `;
+        </div>
+      `;
 
-      })
-      .join("");
+    });
+
+
+    html += `
+        </div>
+      </div>
+    `;
+
+  });
+
+
+  container.innerHTML = html;
 
 }
-
 
 // ==========================================
 // ADD FOOD TO CART
 // ==========================================
 
-function addToCart(foodId) {
+// ==========================================
+// ADD FOOD TO CART
+// ==========================================
 
-  const item =
-    menu.find(
-      x =>
-        x.food_id === foodId
-    );
+function addToCart(foodId, foodName, foodPrice) {
+
+  foodId = Number(foodId);
+
+  const item = menu.find(x =>
+    Number(x.food_id || x.id) === foodId
+  );
 
   if (!item) {
-
     alert("Food item not found.");
-
     return;
-
   }
 
-  const existing =
-    cart.find(
-      x =>
-        x.food_id === foodId
-    );
+  const existing = cart.find(x =>
+    Number(x.food_id) === foodId
+  );
 
   if (existing) {
 
@@ -253,19 +361,10 @@ function addToCart(foodId) {
   } else {
 
     cart.push({
-
-      food_id:
-        item.food_id,
-
-      name:
-        item.name,
-
-      price:
-        Number(item.price),
-
-      qty:
-        1
-
+      food_id: foodId,
+      name: foodName || item.name,
+      price: Number(foodPrice || item.price),
+      qty: 1
     });
 
   }
@@ -278,12 +377,10 @@ function addToCart(foodId) {
   updateCartCount();
 
   alert(
-    item.name +
+    (foodName || item.name) +
     " added to cart"
   );
-
 }
-
 
 // ==========================================
 // UPDATE CART COUNT
@@ -915,3 +1012,48 @@ if (trackId) {
   }
 
 }
+// ==========================================
+// SEARCH AND CATEGORY FILTER
+// ==========================================
+
+document.addEventListener("DOMContentLoaded", () => {
+
+  const searchInput =
+    document.getElementById("menuSearch");
+
+  if (searchInput) {
+
+    searchInput.addEventListener("input", function () {
+
+      searchText =
+        this.value.trim().toLowerCase();
+
+      renderMenu();
+
+    });
+
+  }
+
+  const categoryButtons =
+    document.querySelectorAll(".category-btn");
+
+  categoryButtons.forEach(button => {
+
+    button.addEventListener("click", function () {
+
+      categoryButtons.forEach(btn => {
+        btn.classList.remove("active");
+      });
+
+      this.classList.add("active");
+
+      selectedCategory =
+        this.dataset.category;
+
+      renderMenu();
+
+    });
+
+  });
+
+});

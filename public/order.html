@@ -1,165 +1,644 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>My Orders | Thulir Unavagam</title>
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
 
-  <link rel="stylesheet" href="style.css">
+  <title>
+    My Orders | Thulir Unavagam
+  </title>
+
+  <link
+    rel="stylesheet"
+    href="style.css"
+  >
 
   <style>
+
+    /* =====================================================
+       ORDERS PAGE
+       ===================================================== */
+
     .orders-page {
+
       max-width: 1000px;
+
       margin: auto;
+
       padding: 40px 20px;
+
+      min-height: 600px;
+
     }
 
-    .phone-search {
+
+    /* =====================================================
+       ACCOUNT BOX
+       ===================================================== */
+
+    .account-box {
+
       background: white;
+
       padding: 25px;
+
       border-radius: 18px;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+
+      box-shadow:
+        0 8px 25px rgba(0, 0, 0, 0.08);
+
       margin-bottom: 30px;
-    }
 
-    .phone-search label {
-      display: block;
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-
-    .phone-search input {
-      width: 100%;
-      padding: 13px;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      margin-bottom: 15px;
-      box-sizing: border-box;
-      font-size: 15px;
-    }
-
-    .orders-list {
-      display: grid;
-      gap: 20px;
-    }
-
-    .order-card {
-      background: white;
-      border-radius: 18px;
-      padding: 24px;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-    }
-
-    .order-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 15px;
-      flex-wrap: wrap;
-      margin-bottom: 20px;
-    }
-
-    .order-header h3 {
-      margin: 0 0 5px;
-    }
-
-    .order-header small {
-      color: #777;
-    }
-
-    .status-badge {
-      padding: 8px 14px;
-      border-radius: 20px;
-      font-weight: 600;
-      background: #eaf4ff;
-    }
-
-    .order-info {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-
-    .info-box {
-      background: #f7f9fb;
-      padding: 14px;
-      border-radius: 10px;
-    }
-
-    .info-box span {
-      display: block;
-      color: #777;
-      font-size: 13px;
-      margin-bottom: 5px;
-    }
-
-    .info-box strong {
-      display: block;
-      font-size: 15px;
-    }
-
-    .order-items {
-      border-top: 1px solid #eee;
-      padding-top: 15px;
-    }
-
-    .order-item {
-      display: flex;
-      justify-content: space-between;
-      gap: 15px;
-      padding: 9px 0;
-    }
-
-    .order-total {
-      border-top: 1px solid #eee;
-      margin-top: 15px;
-      padding-top: 15px;
-      display: flex;
-      justify-content: space-between;
-      font-size: 18px;
-      font-weight: bold;
-    }
-
-    .track-btn {
-      margin-top: 18px;
-      display: inline-block;
-      text-decoration: none;
-    }
-
-    .empty-orders {
       text-align: center;
-      background: white;
-      padding: 40px;
-      border-radius: 18px;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
+
     }
+
+
+    .account-box h3 {
+
+      margin-top: 0;
+
+      color: #14532d;
+
+      font-size: 22px;
+
+    }
+
+
+    .account-box p {
+
+      color: #555;
+
+      margin-bottom: 20px;
+
+    }
+
+
+    .account-buttons {
+
+      display: flex;
+
+      justify-content: center;
+
+      gap: 12px;
+
+      flex-wrap: wrap;
+
+    }
+
+
+    /* =====================================================
+       BUTTONS
+       ===================================================== */
+
+    .checkout-btn {
+
+      border: none;
+
+      cursor: pointer;
+
+      text-decoration: none;
+
+      display: inline-block;
+
+      padding: 12px 22px;
+
+      border-radius: 10px;
+
+      font-weight: 600;
+
+    }
+
+
+    .refresh-btn {
+
+      background: #198754;
+
+      color: white;
+
+    }
+
+
+    .refresh-btn:hover {
+
+      background: #157347;
+
+    }
+
+
+    .login-btn {
+
+      background: #14532d;
+
+      color: white;
+
+    }
+
+
+    .menu-btn {
+
+      background: #f3f4f6;
+
+      color: #222;
+
+    }
+
+
+    /* =====================================================
+       MESSAGE
+       ===================================================== */
 
     #ordersMessage {
-      margin-top: 12px;
+
+      text-align: center;
+
+      margin: 15px 0;
+
+      font-weight: 600;
+
     }
+
+
+    /* =====================================================
+       ORDERS LIST
+       ===================================================== */
+
+    .orders-list {
+
+      display: grid;
+
+      gap: 20px;
+
+    }
+
+
+    /* =====================================================
+       ORDER CARD
+       ===================================================== */
+
+    .order-card {
+
+      background: white;
+
+      border-radius: 18px;
+
+      padding: 24px;
+
+      box-shadow:
+        0 8px 25px rgba(0, 0, 0, 0.08);
+
+    }
+
+
+    .order-header {
+
+      display: flex;
+
+      justify-content: space-between;
+
+      align-items: center;
+
+      gap: 15px;
+
+      flex-wrap: wrap;
+
+      margin-bottom: 20px;
+
+    }
+
+
+    .order-header h3 {
+
+      margin: 0 0 5px;
+
+      color: #14532d;
+
+    }
+
+
+    .order-header small {
+
+      color: #777;
+
+    }
+
+
+    /* =====================================================
+       STATUS
+       ===================================================== */
+
+    .status-badge {
+
+      padding: 8px 14px;
+
+      border-radius: 20px;
+
+      font-weight: 600;
+
+      background: #eaf4ff;
+
+      color: #14532d;
+
+    }
+
+
+    .status-new {
+
+      background: #eaf4ff;
+
+    }
+
+
+    .status-accepted {
+
+      background: #fff3cd;
+
+    }
+
+
+    .status-preparing {
+
+      background: #ffe5d0;
+
+    }
+
+
+    .status-ready {
+
+      background: #d1e7dd;
+
+    }
+
+
+    .status-completed {
+
+      background: #cfe2ff;
+
+    }
+
+
+    .status-cancelled {
+
+      background: #f8d7da;
+
+      color: #842029;
+
+    }
+
+
+    /* =====================================================
+       ORDER INFORMATION
+       ===================================================== */
+
+    .order-info {
+
+      display: grid;
+
+      grid-template-columns:
+        repeat(3, 1fr);
+
+      gap: 12px;
+
+      margin-bottom: 20px;
+
+    }
+
+
+    .info-box {
+
+      background: #f7f9fb;
+
+      padding: 14px;
+
+      border-radius: 10px;
+
+    }
+
+
+    .info-box span {
+
+      display: block;
+
+      color: #777;
+
+      font-size: 13px;
+
+      margin-bottom: 5px;
+
+    }
+
+
+    .info-box strong {
+
+      display: block;
+
+      font-size: 15px;
+
+    }
+
+
+    /* =====================================================
+       ORDER ITEMS
+       ===================================================== */
+
+    .order-items {
+
+      border-top:
+        1px solid #eee;
+
+      padding-top: 15px;
+
+    }
+
+
+    .order-item {
+
+      display: flex;
+
+      justify-content: space-between;
+
+      align-items: center;
+
+      gap: 15px;
+
+      padding: 9px 0;
+
+      border-bottom:
+        1px solid #f0f0f0;
+
+    }
+
+
+    .order-item:last-child {
+
+      border-bottom: none;
+
+    }
+
+
+    .order-item span {
+
+      color: #333;
+
+    }
+
+
+    .order-item strong {
+
+      color: #14532d;
+
+    }
+
+
+    /* =====================================================
+       TOTAL
+       ===================================================== */
+
+    .order-total {
+
+      border-top:
+        1px solid #eee;
+
+      margin-top: 15px;
+
+      padding-top: 15px;
+
+      display: flex;
+
+      justify-content: space-between;
+
+      font-size: 18px;
+
+      font-weight: bold;
+
+    }
+
+
+    /* =====================================================
+       TRACK BUTTON
+       ===================================================== */
+
+    .track-btn {
+
+      margin-top: 18px;
+
+    }
+
+
+    /* =====================================================
+       EMPTY ORDERS
+       ===================================================== */
+
+    .empty-orders {
+
+      text-align: center;
+
+      background: white;
+
+      padding: 45px 25px;
+
+      border-radius: 18px;
+
+      box-shadow:
+        0 8px 25px rgba(0, 0, 0, 0.06);
+
+    }
+
+
+    .empty-orders h3 {
+
+      color: #14532d;
+
+      margin-bottom: 10px;
+
+    }
+
+
+    .empty-orders p {
+
+      color: #777;
+
+    }
+
+
+    /* =====================================================
+       LOGIN REQUIRED
+       ===================================================== */
+
+    .login-required {
+
+      text-align: center;
+
+      background: white;
+
+      padding: 45px 25px;
+
+      border-radius: 18px;
+
+      box-shadow:
+        0 8px 25px rgba(0, 0, 0, 0.06);
+
+      margin-top: 20px;
+
+    }
+
+
+    .login-required .icon {
+
+      font-size: 45px;
+
+      margin-bottom: 10px;
+
+    }
+
+
+    .login-required h3 {
+
+      margin: 10px 0;
+
+      color: #14532d;
+
+    }
+
+
+    .login-required p {
+
+      color: #555;
+
+      margin-bottom: 20px;
+
+    }
+
+
+    /* =====================================================
+       LOADING
+       ===================================================== */
+
+    .loading-orders {
+
+      text-align: center;
+
+      background: white;
+
+      padding: 40px;
+
+      border-radius: 18px;
+
+      box-shadow:
+        0 8px 25px rgba(0, 0, 0, 0.06);
+
+    }
+
+
+    .loading-orders .loader {
+
+      width: 35px;
+
+      height: 35px;
+
+      border: 4px solid #ddd;
+
+      border-top:
+        4px solid #198754;
+
+      border-radius: 50%;
+
+      animation:
+        spin 1s linear infinite;
+
+      margin: 0 auto 15px;
+
+    }
+
+
+    @keyframes spin {
+
+      to {
+
+        transform:
+          rotate(360deg);
+
+      }
+
+    }
+
+
+    /* =====================================================
+       MOBILE
+       ===================================================== */
 
     @media (max-width: 700px) {
 
-      .order-info {
-        grid-template-columns: 1fr;
+      .orders-page {
+
+        padding:
+          25px 15px;
+
       }
+
+
+      .order-info {
+
+        grid-template-columns:
+          1fr;
+
+      }
+
 
       .order-card {
+
         padding: 18px;
+
       }
 
+
       .order-item {
+
         font-size: 14px;
+
       }
+
+
+      .order-total {
+
+        font-size: 16px;
+
+      }
+
+
+      .account-buttons {
+
+        flex-direction: column;
+
+      }
+
+
+      .account-buttons .checkout-btn {
+
+        width: 100%;
+
+      }
+
     }
+
   </style>
+
 </head>
+
 
 <body>
 
-  <!-- NAVBAR -->
+
+  <!-- =====================================================
+       NAVBAR
+       ===================================================== -->
+
   <header class="navbar">
 
     <div class="brand">
@@ -170,11 +649,19 @@
       >
 
       <div>
-        <h1>Thulir Unavagam</h1>
-        <p>Fresh food, every day</p>
+
+        <h1>
+          Thulir Unavagam
+        </h1>
+
+        <p>
+          Fresh food, every day
+        </p>
+
       </div>
 
     </div>
+
 
     <div class="nav-actions">
 
@@ -191,10 +678,19 @@
   </header>
 
 
-  <!-- MAIN -->
+
+  <!-- =====================================================
+       MAIN
+       ===================================================== -->
+
   <main>
 
     <section class="orders-page">
+
+
+      <!-- =================================================
+           HEADING
+           ================================================= -->
 
       <div class="section-heading">
 
@@ -207,51 +703,75 @@
         </h2>
 
         <p>
-          Enter your phone number to view your orders.
+          View and track all orders placed from your customer account.
         </p>
 
       </div>
 
 
-      <!-- PHONE SEARCH -->
-      <div class="phone-search">
 
-        <label for="phoneInput">
-          Phone Number
-        </label>
+      <!-- =================================================
+           ACCOUNT BOX
+           ================================================= -->
 
-        <input
-          type="tel"
-          id="phoneInput"
-          maxlength="10"
-          inputmode="numeric"
-          placeholder="Enter 10-digit phone number"
-        >
+      <div
+        id="accountBox"
+        class="account-box"
+      >
 
-        <button
-          class="checkout-btn"
-          onclick="loadMyOrders()"
-        >
-          🔍 View My Orders
-        </button>
+        <h3>
+          👤 Customer Account
+        </h3>
 
-        <p id="ordersMessage"></p>
+        <p>
+          Your orders are automatically loaded from your account.
+        </p>
+
+        <div class="account-buttons">
+
+          <button
+            class="checkout-btn refresh-btn"
+            onclick="loadMyOrders()"
+          >
+            🔍 Refresh My Orders
+          </button>
+
+        </div>
 
       </div>
 
 
-      <!-- ORDERS -->
+
+      <!-- =================================================
+           MESSAGE
+           ================================================= -->
+
+      <p
+        id="ordersMessage"
+      ></p>
+
+
+
+      <!-- =================================================
+           ORDERS
+           ================================================= -->
+
       <div
         id="ordersList"
         class="orders-list"
       ></div>
+
 
     </section>
 
   </main>
 
 
-  <!-- FOOTER -->
+
+  <!-- =====================================================
+       FOOTER
+       ===================================================== -->
+
   <footer>
 
     <strong>
@@ -263,61 +783,99 @@
     </p>
 
     <p>
-      © 2026 Thulir Unavagam. All rights reserved.
+      © 2026 Thulir Unavagam.
+      All rights reserved.
     </p>
 
   </footer>
 
 
-  <!-- JAVASCRIPT -->
+
+  <!-- =====================================================
+       JAVASCRIPT
+       ===================================================== -->
+
   <script>
 
+
     // =====================================================
-    // LOAD CUSTOMER ORDERS
+    // PAGE LOAD
+    // =====================================================
+
+    document.addEventListener(
+      "DOMContentLoaded",
+      function() {
+
+        loadMyOrders();
+
+      }
+    );
+
+
+
+    // =====================================================
+    // LOAD LOGGED-IN CUSTOMER ORDERS
     // =====================================================
 
     async function loadMyOrders() {
 
-      const phoneInput =
-        document.getElementById("phoneInput");
-
       const message =
-        document.getElementById("ordersMessage");
+        document.getElementById(
+          "ordersMessage"
+        );
+
 
       const ordersList =
-        document.getElementById("ordersList");
+        document.getElementById(
+          "ordersList"
+        );
 
 
-      const phone =
-        phoneInput.value.trim();
+      // Clear old message
 
-
-      // Validate phone number
-      if (!/^\d{10}$/.test(phone)) {
-
-        message.textContent =
-          "Please enter a valid 10-digit phone number.";
-
-        message.style.color = "red";
-
-        return;
-      }
-
-
-      message.textContent =
-        "Loading orders...";
+      message.textContent = "";
 
       message.style.color = "";
 
 
-      ordersList.innerHTML = "";
+      // Show loading
+
+      ordersList.innerHTML = `
+
+        <div class="loading-orders">
+
+          <div class="loader"></div>
+
+          <h3>
+            Loading Your Orders...
+          </h3>
+
+          <p>
+            Please wait.
+          </p>
+
+        </div>
+
+      `;
 
 
       try {
 
+
+        // =================================================
+        // IMPORTANT:
+        // This uses the customer login session cookie.
+        // No phone number is required.
+        // =================================================
+
         const response =
           await fetch(
-            `/api/my-orders/${encodeURIComponent(phone)}`
+            "/api/customer/my-orders",
+            {
+              method: "GET",
+
+              credentials: "include"
+            }
           );
 
 
@@ -325,16 +883,39 @@
           await response.json();
 
 
+        // =================================================
+        // LOGIN REQUIRED
+        // =================================================
+
+        if (
+          response.status === 401
+        ) {
+
+          showLoginRequired();
+
+          return;
+
+        }
+
+
+        // =================================================
+        // OTHER ERROR
+        // =================================================
+
         if (!response.ok) {
 
           throw new Error(
             data.message ||
-            "Unable to load orders."
+            "Unable to load your orders."
           );
+
         }
 
 
-        // No orders
+        // =================================================
+        // NO ORDERS
+        // =================================================
+
         if (
           !data.orders ||
           data.orders.length === 0
@@ -344,13 +925,26 @@
 
             <div class="empty-orders">
 
+              <div
+                style="font-size:45px;"
+              >
+                🍽️
+              </div>
+
               <h3>
-                No Orders Found
+                No Orders Yet
               </h3>
 
               <p>
-                No orders were found for this phone number.
+                You have not placed any orders yet.
               </p>
+
+              <a
+                href="index.html"
+                class="checkout-btn login-btn"
+              >
+                🍴 Browse Today's Menu
+              </a>
 
             </div>
 
@@ -359,86 +953,222 @@
           message.textContent = "";
 
           return;
+
         }
 
+
+        // =================================================
+        // ORDER COUNT
+        // =================================================
 
         message.textContent =
           `${data.total_orders} order(s) found.`;
 
 
-        // Display orders
-        data.orders.forEach(order => {
+        message.style.color =
+          "#198754";
 
-          ordersList.innerHTML +=
-            createOrderCard(order);
 
-        });
+        // =================================================
+        // DISPLAY ORDERS
+        // =================================================
+
+        ordersList.innerHTML = "";
+
+
+        data.orders.forEach(
+          order => {
+
+            ordersList.innerHTML +=
+              createOrderCard(order);
+
+          }
+        );
 
 
       } catch (error) {
 
+
         console.error(
-          "MY ORDERS ERROR:",
+          "CUSTOMER MY ORDERS ERROR:",
           error
         );
 
-        message.textContent =
-          error.message ||
-          "Unable to load orders.";
 
-        message.style.color = "red";
+        ordersList.innerHTML = `
+
+          <div class="empty-orders">
+
+            <h3>
+              ⚠️ Unable to Load Orders
+            </h3>
+
+            <p>
+              ${escapeHtml(
+                error.message ||
+                "Something went wrong."
+              )}
+            </p>
+
+            <button
+              class="checkout-btn refresh-btn"
+              onclick="loadMyOrders()"
+            >
+              🔄 Try Again
+            </button>
+
+          </div>
+
+        `;
+
+
+        message.textContent = "";
 
       }
 
     }
 
 
+
+    // =====================================================
+    // LOGIN REQUIRED
+    // =====================================================
+
+    function showLoginRequired() {
+
+      const ordersList =
+        document.getElementById(
+          "ordersList"
+        );
+
+
+      const message =
+        document.getElementById(
+          "ordersMessage"
+        );
+
+
+      message.textContent = "";
+
+
+      ordersList.innerHTML = `
+
+        <div class="login-required">
+
+          <div class="icon">
+            🔐
+          </div>
+
+          <h3>
+            Login Required
+          </h3>
+
+          <p>
+            Please login to your customer account
+            to view your orders.
+          </p>
+
+
+          <div class="account-buttons">
+
+            <a
+              href="customer-login.html"
+              class="checkout-btn login-btn"
+            >
+              🔑 Login
+            </a>
+
+
+            <a
+              href="customer-register.html"
+              class="checkout-btn menu-btn"
+            >
+              📝 Create Account
+            </a>
+
+          </div>
+
+        </div>
+
+      `;
+
+    }
+
+
+
     // =====================================================
     // CREATE ORDER CARD
     // =====================================================
 
-    function createOrderCard(order) {
+    function createOrderCard(
+      order
+    ) {
+
 
       let itemsHTML = "";
 
+
+      // ===================================================
+      // ITEMS
+      // ===================================================
 
       if (
         order.items &&
         order.items.length > 0
       ) {
 
-        order.items.forEach(item => {
 
-          const price =
-            Number(item.unit_price || 0);
-
-          const quantity =
-            Number(item.quantity || 0);
-
-          const total =
-            price * quantity;
+        order.items.forEach(
+          item => {
 
 
-          itemsHTML += `
+            const price =
+              Number(
+                item.unit_price || 0
+              );
 
-            <div class="order-item">
 
-              <span>
-                ${escapeHtml(item.food_name)}
-                × ${quantity}
-              </span>
+            const quantity =
+              Number(
+                item.quantity || 0
+              );
 
-              <strong>
-                ₹${total.toFixed(2)}
-              </strong>
 
-            </div>
+            const total =
+              price * quantity;
 
-          `;
 
-        });
+            itemsHTML += `
+
+              <div class="order-item">
+
+                <span>
+
+                  ${escapeHtml(
+                    item.food_name
+                  )}
+
+                  × ${quantity}
+
+                </span>
+
+
+                <strong>
+
+                  ₹${total.toFixed(2)}
+
+                </strong>
+
+              </div>
+
+            `;
+
+          }
+        );
+
 
       } else {
+
 
         itemsHTML = `
 
@@ -451,33 +1181,75 @@
       }
 
 
-      // Format date
+
+      // ===================================================
+      // DATE
+      // ===================================================
+
       const date =
         order.created_at
-          ? new Date(order.created_at)
-              .toLocaleString()
+
+          ? new Date(
+              order.created_at
+            ).toLocaleString()
+
           : "-";
 
 
-      // Format arrival time
+
+      // ===================================================
+      // ARRIVAL TIME
+      // ===================================================
+
       let arrivalTime =
         order.arrival_time || "-";
 
 
-      // Convert HH:MM:SS to HH:MM
       if (
         arrivalTime.length >= 5
       ) {
 
         arrivalTime =
-          arrivalTime.substring(0, 5);
+          arrivalTime.substring(
+            0,
+            5
+          );
 
       }
 
 
+
+      // ===================================================
+      // STATUS CLASS
+      // ===================================================
+
+      const status =
+        String(
+          order.status || "New"
+        );
+
+
+      const statusClass =
+        "status-" +
+        status
+          .toLowerCase()
+          .replace(
+            /\s+/g,
+            "-"
+          );
+
+
+
+      // ===================================================
+      // RETURN ORDER CARD
+      // ===================================================
+
       return `
 
         <div class="order-card">
+
+
+          <!-- ORDER HEADER -->
 
           <div class="order-header">
 
@@ -493,16 +1265,23 @@
 
             </div>
 
-            <div class="status-badge">
 
-              ${escapeHtml(order.status)}
+            <div
+              class="status-badge ${statusClass}"
+            >
+
+              ${escapeHtml(status)}
 
             </div>
 
           </div>
 
 
+
+          <!-- ORDER INFORMATION -->
+
           <div class="order-info">
+
 
             <!-- CUSTOMER -->
 
@@ -513,12 +1292,15 @@
               </span>
 
               <strong>
+
                 ${escapeHtml(
                   order.customer_name
                 )}
+
               </strong>
 
             </div>
+
 
 
             <!-- ORDER TYPE -->
@@ -530,12 +1312,15 @@
               </span>
 
               <strong>
+
                 ${escapeHtml(
                   order.order_type || "-"
                 )}
+
               </strong>
 
             </div>
+
 
 
             <!-- ARRIVAL TIME -->
@@ -547,14 +1332,18 @@
               </span>
 
               <strong>
+
                 ${escapeHtml(
                   arrivalTime
                 )}
+
               </strong>
 
             </div>
 
+
           </div>
+
 
 
           <!-- ITEMS -->
@@ -570,6 +1359,7 @@
           </div>
 
 
+
           <!-- TOTAL -->
 
           <div class="order-total">
@@ -579,24 +1369,30 @@
             </span>
 
             <span>
+
               ₹${Number(
                 order.total_amount || 0
               ).toFixed(2)}
+
             </span>
 
           </div>
 
 
-          <!-- TRACK -->
+
+          <!-- TRACK ORDER -->
 
           <a
             href="index.html?track=${encodeURIComponent(
               order.order_id
             )}"
-            class="checkout-btn track-btn"
+            class="checkout-btn login-btn track-btn"
           >
+
             📍 Track Order
+
           </a>
+
 
         </div>
 
@@ -605,17 +1401,39 @@
     }
 
 
+
     // =====================================================
     // ESCAPE HTML
     // =====================================================
 
-    function escapeHtml(value) {
+    function escapeHtml(
+      value
+    ) {
 
-      return String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
+      return String(
+        value ?? ""
+      )
+
+        .replace(
+          /&/g,
+          "&amp;"
+        )
+
+        .replace(
+          /</g,
+          "&lt;"
+        )
+
+        .replace(
+          />/g,
+          "&gt;"
+        )
+
+        .replace(
+          /"/g,
+          "&quot;"
+        )
+
         .replace(
           /'/g,
           "&#039;"
@@ -623,29 +1441,9 @@
 
     }
 
-
-    // =====================================================
-    // ENTER KEY SUPPORT
-    // =====================================================
-
-    document
-      .getElementById("phoneInput")
-      .addEventListener(
-        "keydown",
-        function(event) {
-
-          if (
-            event.key === "Enter"
-          ) {
-
-            loadMyOrders();
-
-          }
-
-        }
-      );
-
   </script>
 
+
 </body>
+
 </html>

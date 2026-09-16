@@ -2,7 +2,6 @@ let cart = JSON.parse(
   localStorage.getItem("thulirCart") || "[]"
 );
 
-
 // =====================================================
 // LOAD CHECKOUT
 // =====================================================
@@ -13,19 +12,33 @@ document.addEventListener("DOMContentLoaded", () => {
 
   setDefaultArrivalTime();
 
+
+  // Update summary when Dine-in / Parcel changes
+  document
+    .querySelectorAll('input[name="order_type"]')
+    .forEach(radio => {
+
+      radio.addEventListener(
+        "change",
+        renderCheckoutSummary
+      );
+
+    });
+
+
   const form =
     document.getElementById("checkoutForm");
 
   if (form) {
+
     form.addEventListener(
       "submit",
       placeOrder
     );
+
   }
 
 });
-
-
 // =====================================================
 // DEFAULT ARRIVAL TIME
 // =====================================================
@@ -40,7 +53,6 @@ function setDefaultArrivalTime() {
   const now = new Date();
 
   let hours = now.getHours();
-
   let minutes = now.getMinutes();
 
   // Round to next 15 minutes
@@ -75,9 +87,7 @@ function setDefaultArrivalTime() {
 function renderCheckoutSummary() {
 
   const summary =
-    document.getElementById(
-      "checkoutSummary"
-    );
+    document.getElementById("checkoutSummary");
 
   if (!summary) return;
 
@@ -110,30 +120,61 @@ function renderCheckoutSummary() {
   let total = 0;
 
 
+  cart.forEach(item => {
+
+    const price = Number(item.price);
+    const quantity = Number(item.qty);
+
+    total += price * quantity;
+
+  });
+
+
+  const orderTypeElement =
+    document.querySelector(
+      'input[name="order_type"]:checked'
+    );
+
+
+  const orderType =
+    orderTypeElement
+      ? orderTypeElement.value
+      : "";
+
+
+  // Parcel charge = ₹5
+  const parcelCharge =
+    orderType === "Parcel"
+      ? 5
+      : 0;
+
+
+  const grandTotal =
+    total + parcelCharge;
+
+
   let html = `
+
     <div class="checkout-summary">
 
       <h3>Order Summary</h3>
 
       <div class="checkout-items">
+
   `;
 
 
   cart.forEach(item => {
 
-    const price =
-      Number(item.price);
-
-    const quantity =
-      Number(item.qty);
+    const price = Number(item.price);
+    const quantity = Number(item.qty);
 
     const itemTotal =
       price * quantity;
 
-    total += itemTotal;
-
 
     html += `
+
       <div class="checkout-item">
 
         <div>
@@ -154,9 +195,34 @@ function renderCheckoutSummary() {
         </strong>
 
       </div>
+
     `;
 
   });
+
+
+  // Show Parcel Charge only for Parcel
+  if (parcelCharge > 0) {
+
+    html += `
+
+      <div class="checkout-item">
+
+        <div>
+          <strong>
+            Parcel Charge
+          </strong>
+        </div>
+
+        <strong>
+          ₹5.00
+        </strong>
+
+      </div>
+
+    `;
+
+  }
 
 
   html += `
@@ -165,21 +231,24 @@ function renderCheckoutSummary() {
 
       <div class="checkout-total">
 
-        <span>Total Amount</span>
+        <span>
+          Total Amount
+        </span>
 
         <strong>
-          ₹${total.toFixed(2)}
+          ₹${grandTotal.toFixed(2)}
         </strong>
 
       </div>
 
     </div>
+
   `;
 
 
   summary.innerHTML = html;
-}
 
+}
 
 // =====================================================
 // PLACE ORDER
@@ -237,7 +306,7 @@ async function placeOrder(event) {
   const paymentMethod =
     paymentElement
       ? paymentElement.value
-      : "Cash on Delivery";
+      : "Cash Payment";
 
 
   // ===================================================
@@ -303,25 +372,24 @@ async function placeOrder(event) {
 
 
   // ===================================================
-  // SAVE CART ITEMS FOR RECEIPT
+  // REFRESH SUMMARY
   // ===================================================
 
-  const receiptItems =
-    cart.map(item => ({
-      name: item.name,
-      price: Number(item.price),
-      qty: Number(item.qty),
-      food_id: Number(item.food_id)
-    }));
+  renderCheckoutSummary();
 
 
   // ===================================================
-  // PREPARE ITEMS FOR SERVER
+  // PREPARE ITEMS
   // ===================================================
 
   const items = cart.map(item => ({
-    food_id: Number(item.food_id),
-    qty: Number(item.qty)
+
+    food_id:
+      Number(item.food_id),
+
+    qty:
+      Number(item.qty)
+
   }));
 
 
@@ -351,45 +419,48 @@ async function placeOrder(event) {
   );
 
 
+  // ===================================================
+  // SEND ORDER TO SERVER
+  // ===================================================
+
   try {
 
-    // =================================================
-    // SEND ORDER TO SERVER
-    // =================================================
-
     const response =
-      await fetch("/api/orders", {
+      await fetch(
+        "/api/orders",
+        {
 
-        method: "POST",
+          method: "POST",
 
-        headers: {
-          "Content-Type":
-            "application/json"
-        },
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
 
-        body: JSON.stringify({
+          body: JSON.stringify({
 
-          customer_name:
-            customerName,
+            customer_name:
+              customerName,
 
-          phone:
-            phone,
+            phone:
+              phone,
 
-          order_type:
-            orderType,
+            order_type:
+              orderType,
 
-          arrival_time:
-            arrivalTime,
+            arrival_time:
+              arrivalTime,
 
-          payment_method:
-            paymentMethod,
+            payment_method:
+              paymentMethod,
 
-          items:
-            items
+            items:
+              items
 
-        })
+          })
 
-      });
+        }
+      );
 
 
     const data =
@@ -407,39 +478,7 @@ async function placeOrder(event) {
 
 
     // =================================================
-    // SAVE ORDER DATA BEFORE CLEARING CART
-    // =================================================
-
-    data.customer_name =
-      data.customer_name ||
-      customerName;
-
-    data.phone =
-      data.phone ||
-      phone;
-
-    data.order_type =
-      data.order_type ||
-      orderType;
-
-    data.arrival_time =
-      data.arrival_time ||
-      arrivalTime;
-
-    data.payment_method =
-      data.payment_method ||
-      paymentMethod;
-
-    data.status =
-      data.status ||
-      "New";
-
-    data.items =
-      receiptItems;
-
-
-    // =================================================
-    // CLEAR CART
+    // SAVE ORDER
     // =================================================
 
     localStorage.removeItem(
@@ -515,7 +554,7 @@ function showOrderConfirmation(data) {
 
   const paymentMethod =
     data.payment_method ||
-    "Cash on Delivery";
+    "Cash Payment";
 
 
   main.innerHTML = `
@@ -563,7 +602,9 @@ function showOrderConfirmation(data) {
 
             <div>
 
-              <span>Customer</span>
+              <span>
+                Customer
+              </span>
 
               <strong>
                 ${escapeHtml(
@@ -576,7 +617,9 @@ function showOrderConfirmation(data) {
 
             <div>
 
-              <span>Phone</span>
+              <span>
+                Phone
+              </span>
 
               <strong>
                 ${escapeHtml(
@@ -589,7 +632,9 @@ function showOrderConfirmation(data) {
 
             <div>
 
-              <span>Order Type</span>
+              <span>
+                Order Type
+              </span>
 
               <strong>
                 ${escapeHtml(orderType)}
@@ -600,7 +645,9 @@ function showOrderConfirmation(data) {
 
             <div>
 
-              <span>Expected Arrival</span>
+              <span>
+                Expected Arrival
+              </span>
 
               <strong>
                 ${escapeHtml(arrivalTime)}
@@ -611,7 +658,9 @@ function showOrderConfirmation(data) {
 
             <div>
 
-              <span>Payment</span>
+              <span>
+                Payment
+              </span>
 
               <strong>
                 ${escapeHtml(paymentMethod)}
@@ -622,7 +671,9 @@ function showOrderConfirmation(data) {
 
             <div>
 
-              <span>Total Amount</span>
+              <span>
+                Total Amount
+              </span>
 
               <strong>
                 ₹${total.toFixed(2)}
@@ -681,12 +732,9 @@ function showOrderConfirmation(data) {
       </div>
 
     </section>
+
   `;
 
-
-  // =====================================================
-  // SAVE CURRENT ORDER FOR RECEIPT
-  // =====================================================
 
   window.currentOrder = {
 
@@ -709,13 +757,7 @@ function showOrderConfirmation(data) {
       paymentMethod,
 
     total_amount:
-      total,
-
-    status:
-      data.status || "New",
-
-    items:
-      data.items || []
+      total
 
   };
 
@@ -800,11 +842,13 @@ async function fetchOrderStatus(orderId) {
 
 
     const statuses = [
+
       "New",
       "Accepted",
       "Preparing",
       "Ready",
       "Completed"
+
     ];
 
 
@@ -821,6 +865,7 @@ async function fetchOrderStatus(orderId) {
       </h3>
 
       <div class="status-tracker">
+
     `;
 
 
@@ -891,7 +936,9 @@ async function fetchOrderStatus(orderId) {
     `;
 
 
-    if (order.status === "Cancelled") {
+    if (
+      order.status === "Cancelled"
+    ) {
 
       trackerHTML += `
 
@@ -912,7 +959,9 @@ async function fetchOrderStatus(orderId) {
     }
 
 
-    if (order.status === "Completed") {
+    if (
+      order.status === "Completed"
+    ) {
 
       trackerHTML += `
 
@@ -940,9 +989,7 @@ async function fetchOrderStatus(orderId) {
       trackerHTML;
 
 
-    // =================================================
-    // UPDATE RECEIPT DATA
-    // =================================================
+    // Update receipt data
 
     if (window.currentOrder) {
 
@@ -994,6 +1041,7 @@ function printReceipt() {
     );
 
     return;
+
   }
 
 
@@ -1012,7 +1060,7 @@ function printReceipt() {
     const qty =
       Number(item.qty || 0);
 
-    const itemTotal =
+    const total =
       price * qty;
 
 
@@ -1033,7 +1081,7 @@ function printReceipt() {
         </td>
 
         <td>
-          ₹${itemTotal.toFixed(2)}
+          ₹${total.toFixed(2)}
         </td>
 
       </tr>
@@ -1055,66 +1103,119 @@ function printReceipt() {
         Thulir Unavagam Receipt
       </title>
 
+
       <style>
 
         body {
-          font-family: Arial, sans-serif;
+
+          font-family:
+            Arial,
+            sans-serif;
+
           padding: 30px;
+
           color: #222;
+
         }
+
 
         .receipt {
+
           max-width: 700px;
+
           margin: auto;
+
         }
+
 
         h1 {
+
           text-align: center;
+
           margin-bottom: 5px;
+
         }
+
 
         .subtitle {
+
           text-align: center;
+
           color: #666;
+
         }
+
 
         .line {
-          border-top: 1px solid #ccc;
+
+          border-top:
+            1px solid #ccc;
+
           margin: 20px 0;
+
         }
+
 
         .details {
+
           margin: 15px 0;
+
         }
+
 
         .details p {
+
           margin: 7px 0;
+
         }
 
+
         table {
+
           width: 100%;
-          border-collapse: collapse;
+
+          border-collapse:
+            collapse;
+
           margin-top: 20px;
+
         }
+
 
         th,
         td {
-          border-bottom: 1px solid #ddd;
+
+          border-bottom:
+            1px solid #ddd;
+
           padding: 10px;
+
           text-align: left;
+
         }
+
 
         .total {
+
           text-align: right;
+
           font-size: 20px;
+
           font-weight: bold;
+
           margin-top: 20px;
+
         }
 
+
         .footer {
+
           text-align: center;
+
           margin-top: 40px;
+
           color: #666;
+
         }
 
       </style>
@@ -1129,6 +1230,7 @@ function printReceipt() {
         <h1>
           Thulir Unavagam
         </h1>
+
 
         <div class="subtitle">
           Fresh food, every day.
@@ -1145,34 +1247,42 @@ function printReceipt() {
             #${order.order_id}
           </p>
 
+
           <p>
             <strong>Customer:</strong>
             ${escapeHtml(order.customer_name)}
           </p>
+
 
           <p>
             <strong>Phone:</strong>
             ${escapeHtml(order.phone)}
           </p>
 
+
           <p>
             <strong>Order Type:</strong>
             ${escapeHtml(order.order_type)}
           </p>
+
 
           <p>
             <strong>Expected Arrival:</strong>
             ${escapeHtml(order.arrival_time)}
           </p>
 
+
           <p>
             <strong>Payment:</strong>
             ${escapeHtml(order.payment_method)}
           </p>
 
+
           <p>
             <strong>Status:</strong>
-            ${escapeHtml(order.status || "New")}
+            ${escapeHtml(
+              order.status || "New"
+            )}
           </p>
 
         </div>
@@ -1185,8 +1295,11 @@ function printReceipt() {
             <tr>
 
               <th>Item</th>
+
               <th>Qty</th>
+
               <th>Price</th>
+
               <th>Total</th>
 
             </tr>
@@ -1206,6 +1319,7 @@ function printReceipt() {
         <div class="total">
 
           Total:
+
           ₹${Number(
             order.total_amount || 0
           ).toFixed(2)}

@@ -9,12 +9,57 @@ const app = express();
 
 const PORT = Number(process.env.PORT) || 5000;
 
-/* =========================================================
-   BASIC CONFIGURATION
-   ========================================================= */
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+/* =========================================================
+   SESSION CONFIGURATION
+   ========================================================= */
+
+const SESSION_DURATION = 60 * 60 * 1000;
+
+const CUSTOMER_SESSION_SECRET =
+  process.env.CUSTOMER_SESSION_SECRET ||
+  "thulir-unavagam-customer-session-secret-2026";
+
+
+/* =========================================================
+   COOKIE HELPERS
+   ========================================================= */
+
+function getCookies(req) {
+
+  const cookieHeader =
+    req.headers.cookie || "";
+
+  const cookies = {};
+
+  cookieHeader.split(";").forEach(cookie => {
+
+    const parts =
+      cookie.trim().split("=");
+
+    if (parts.length >= 2) {
+
+      const key = parts.shift();
+
+      const value =
+        parts.join("=");
+
+      try {
+        cookies[key] =
+          decodeURIComponent(value);
+      } catch {
+        cookies[key] = value;
+      }
+
+    }
+
+  });
+
+  return cookies;
+}
+
 
 /* =========================================================
    ADMIN SESSION SYSTEM
@@ -22,638 +67,1970 @@ app.use(express.urlencoded({ extended: true }));
 
 const adminSessions = new Map();
 
-const SESSION_DURATION = 60 * 60 * 1000;
 
 function createAdminSession() {
-  const token = crypto.randomBytes(32).toString("hex");
+
+  const token =
+    crypto.randomBytes(32).toString("hex");
 
   adminSessions.set(token, {
+
     createdAt: Date.now(),
-    expiresAt: Date.now() + SESSION_DURATION
+
+    expiresAt:
+      Date.now() + SESSION_DURATION
+
   });
 
   return token;
 }
 
+
 function getAdminToken(req) {
-  const cookieHeader = req.headers.cookie || "";
 
-  const cookies = {};
-
-  cookieHeader.split(";").forEach(cookie => {
-    const parts = cookie.trim().split("=");
-
-    if (parts.length >= 2) {
-      const key = parts.shift();
-      const value = parts.join("=");
-
-      cookies[key] = decodeURIComponent(value);
-    }
-  });
+  const cookies =
+    getCookies(req);
 
   return cookies.admin_session || null;
 }
 
+
 function requireAdmin(req, res, next) {
-  const token = getAdminToken(req);
+
+  const token =
+    getAdminToken(req);
 
   if (!token) {
+
     return res.status(401).json({
+
       success: false,
-      message: "Admin login required."
+
+      message:
+        "Admin login required."
+
     });
+
   }
 
-  const session = adminSessions.get(token);
+
+  const session =
+    adminSessions.get(token);
+
 
   if (!session) {
+
     return res.status(401).json({
+
       success: false,
-      message: "Invalid admin session."
+
+      message:
+        "Invalid admin session."
+
     });
+
   }
 
-  if (Date.now() > session.expiresAt) {
+
+  if (
+    Date.now() >
+    session.expiresAt
+  ) {
+
     adminSessions.delete(token);
 
     return res.status(401).json({
+
       success: false,
-      message: "Admin session expired."
+
+      message:
+        "Admin session expired."
+
     });
+
   }
 
+
   next();
+
 }
+
 
 /* =========================================================
    ADMIN LOGIN
    ========================================================= */
 
-app.post("/api/admin/login", (req, res) => {
-  try {
-    const username = String(req.body.username || "").trim();
-    const password = String(req.body.password || "");
+app.post(
+  "/api/admin/login",
+  (req, res) => {
 
-    const adminUsername =
-      process.env.ADMIN_USERNAME || "admin";
+    try {
 
-    const adminPassword =
-      process.env.ADMIN_PASSWORD || "admin123";
+      const username =
+        String(
+          req.body.username || ""
+        ).trim();
 
-    if (
-      username !== adminUsername ||
-      password !== adminPassword
-    ) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid username or password."
+      const password =
+        String(
+          req.body.password || ""
+        );
+
+
+      const adminUsername =
+        process.env.ADMIN_USERNAME ||
+        "admin";
+
+
+      const adminPassword =
+        process.env.ADMIN_PASSWORD ||
+        "admin123";
+
+
+      if (
+        username !== adminUsername ||
+        password !== adminPassword
+      ) {
+
+        return res.status(401).json({
+
+          success: false,
+
+          message:
+            "Invalid username or password."
+
+        });
+
+      }
+
+
+      const token =
+        createAdminSession();
+
+
+      res.setHeader(
+
+        "Set-Cookie",
+
+        `admin_session=${encodeURIComponent(token)}; HttpOnly; SameSite=Lax; Max-Age=3600; Path=/`
+
+      );
+
+
+      res.json({
+
+        success: true,
+
+        message:
+          "Admin login successful."
+
       });
+
+
+    } catch (error) {
+
+      console.error(
+        "ADMIN LOGIN ERROR:",
+        error
+      );
+
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          "Unable to login."
+
+      });
+
     }
 
-    const token = createAdminSession();
-
-    res.setHeader(
-      "Set-Cookie",
-      `admin_session=${encodeURIComponent(token)}; HttpOnly; SameSite=Lax; Max-Age=3600; Path=/`
-    );
-
-    res.json({
-      success: true,
-      message: "Admin login successful."
-    });
-
-  } catch (error) {
-    console.error("ADMIN LOGIN ERROR:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Unable to login."
-    });
   }
-});
+);
+
 
 /* =========================================================
    ADMIN LOGOUT
    ========================================================= */
 
-app.post("/api/admin/logout", (req, res) => {
-  try {
-    const token = getAdminToken(req);
+app.post(
+  "/api/admin/logout",
+  (req, res) => {
 
-    if (token) {
-      adminSessions.delete(token);
+    try {
+
+      const token =
+        getAdminToken(req);
+
+
+      if (token) {
+
+        adminSessions.delete(token);
+
+      }
+
+
+      res.setHeader(
+
+        "Set-Cookie",
+
+        "admin_session=; HttpOnly; SameSite=Lax; Max-Age=0; Path=/"
+
+      );
+
+
+      res.json({
+
+        success: true,
+
+        message:
+          "Logged out successfully."
+
+      });
+
+
+    } catch (error) {
+
+      console.error(
+        "ADMIN LOGOUT ERROR:",
+        error
+      );
+
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          "Unable to logout."
+
+      });
+
     }
 
-    res.setHeader(
-      "Set-Cookie",
-      "admin_session=; HttpOnly; SameSite=Lax; Max-Age=0; Path=/"
-    );
-
-    res.json({
-      success: true,
-      message: "Logged out successfully."
-    });
-
-  } catch (error) {
-    console.error("LOGOUT ERROR:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Unable to logout."
-    });
   }
-});
+);
+
 
 /* =========================================================
    ADMIN SESSION CHECK
    ========================================================= */
 
-app.get("/api/admin/check", requireAdmin, (req, res) => {
-  res.json({
-    success: true,
-    loggedIn: true
-  });
-});
+app.get(
+  "/api/admin/check",
+  requireAdmin,
+  (req, res) => {
+
+    res.json({
+
+      success: true,
+
+      loggedIn: true
+
+    });
+
+  }
+);
+
+
+/* =========================================================
+   CUSTOMER ACCOUNT SYSTEM
+   ========================================================= */
+
+
+/*
+   Customer session is stored inside a signed cookie.
+
+   This means restarting Node.js does NOT automatically
+   destroy the customer's login session.
+*/
+
+
+function createCustomerToken(customer) {
+
+  const payload = {
+
+    id: customer.id,
+
+    name: customer.name,
+
+    phone: customer.phone,
+
+    email: customer.email,
+
+    expiresAt:
+      Date.now() + SESSION_DURATION
+
+  };
+
+
+  const encodedPayload =
+    Buffer
+      .from(JSON.stringify(payload))
+      .toString("base64url");
+
+
+  const signature =
+    crypto
+      .createHmac(
+        "sha256",
+        CUSTOMER_SESSION_SECRET
+      )
+      .update(encodedPayload)
+      .digest("base64url");
+
+
+  return `${encodedPayload}.${signature}`;
+
+}
+
+
+function verifyCustomerToken(token) {
+
+  try {
+
+    if (!token) {
+      return null;
+    }
+
+
+    const parts =
+      token.split(".");
+
+
+    if (parts.length !== 2) {
+      return null;
+    }
+
+
+    const [
+      encodedPayload,
+      signature
+    ] = parts;
+
+
+    const expectedSignature =
+      crypto
+        .createHmac(
+          "sha256",
+          CUSTOMER_SESSION_SECRET
+        )
+        .update(encodedPayload)
+        .digest("base64url");
+
+
+    const signatureBuffer =
+      Buffer.from(
+        signature
+      );
+
+
+    const expectedBuffer =
+      Buffer.from(
+        expectedSignature
+      );
+
+
+    if (
+      signatureBuffer.length !==
+      expectedBuffer.length
+    ) {
+
+      return null;
+
+    }
+
+
+    if (
+      !crypto.timingSafeEqual(
+        signatureBuffer,
+        expectedBuffer
+      )
+    ) {
+
+      return null;
+
+    }
+
+
+    const payload =
+      JSON.parse(
+
+        Buffer
+          .from(
+            encodedPayload,
+            "base64url"
+          )
+          .toString("utf8")
+
+      );
+
+
+    if (
+      !payload.expiresAt ||
+      Date.now() >
+        Number(payload.expiresAt)
+    ) {
+
+      return null;
+
+    }
+
+
+    return payload;
+
+
+  } catch (error) {
+
+    return null;
+
+  }
+
+}
+
+
+function getCustomerToken(req) {
+
+  const cookies =
+    getCookies(req);
+
+  return cookies.customer_session || null;
+
+}
+
+
+function requireCustomer(req, res, next) {
+
+  const token =
+    getCustomerToken(req);
+
+
+  if (!token) {
+
+    return res.status(401).json({
+
+      success: false,
+
+      message:
+        "Customer login required."
+
+    });
+
+  }
+
+
+  const customer =
+    verifyCustomerToken(token);
+
+
+  if (!customer) {
+
+    res.setHeader(
+
+      "Set-Cookie",
+
+      "customer_session=; HttpOnly; SameSite=Lax; Max-Age=0; Path=/"
+
+    );
+
+
+    return res.status(401).json({
+
+      success: false,
+
+      message:
+        "Customer session expired. Please login again."
+
+    });
+
+  }
+
+
+  req.customer = customer;
+
+  next();
+
+}
+
+
+/* =========================================================
+   CUSTOMER REGISTER
+   ========================================================= */
+
+app.post(
+  "/api/customer/register",
+  async (req, res) => {
+
+    try {
+
+      const name =
+        String(
+          req.body.name || ""
+        ).trim();
+
+
+      const phone =
+        String(
+          req.body.phone || ""
+        ).trim();
+
+
+      const email =
+        String(
+          req.body.email || ""
+        )
+          .trim()
+          .toLowerCase();
+
+
+      const password =
+        String(
+          req.body.password || ""
+        );
+
+
+      if (!name) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            "Name is required."
+
+        });
+
+      }
+
+
+      if (
+        !/^\d{10}$/.test(phone)
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            "Please enter a valid 10-digit phone number."
+
+        });
+
+      }
+
+
+      if (
+        !email ||
+        !email.includes("@")
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            "Please enter a valid email."
+
+        });
+
+      }
+
+
+      if (
+        password.length < 6
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            "Password must be at least 6 characters."
+
+        });
+
+      }
+
+
+      const [existing] =
+        await db.query(
+
+          `
+          SELECT id
+          FROM customers
+          WHERE phone = ?
+          OR email = ?
+          LIMIT 1
+          `,
+
+          [
+            phone,
+            email
+          ]
+
+        );
+
+
+      if (existing.length > 0) {
+
+        return res.status(409).json({
+
+          success: false,
+
+          message:
+            "Phone number or email already registered."
+
+        });
+
+      }
+
+
+      const salt =
+        crypto.randomBytes(16);
+
+
+      const passwordHash =
+        await new Promise(
+          (resolve, reject) => {
+
+            crypto.scrypt(
+
+              password,
+
+              salt,
+
+              64,
+
+              (error, derivedKey) => {
+
+                if (error) {
+
+                  return reject(
+                    error
+                  );
+
+                }
+
+
+                resolve(
+
+                  salt.toString("hex") +
+                  ":" +
+                  derivedKey.toString("hex")
+
+                );
+
+              }
+
+            );
+
+          }
+        );
+
+
+      const [result] =
+        await db.query(
+
+          `
+          INSERT INTO customers
+          (
+            name,
+            phone,
+            email,
+            password
+          )
+          VALUES (?, ?, ?, ?)
+          `,
+
+          [
+            name,
+            phone,
+            email,
+            passwordHash
+          ]
+
+        );
+
+
+      res.status(201).json({
+
+        success: true,
+
+        message:
+          "Account created successfully.",
+
+        customer_id:
+          result.insertId
+
+      });
+
+
+    } catch (error) {
+
+      console.error(
+        "CUSTOMER REGISTER ERROR:",
+        error
+      );
+
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          "Unable to create account."
+
+      });
+
+    }
+
+  }
+);
+
+
+/* =========================================================
+   CUSTOMER LOGIN
+   ========================================================= */
+
+app.post(
+  "/api/customer/login",
+  async (req, res) => {
+
+    try {
+
+      const login =
+        String(
+          req.body.login || ""
+        ).trim();
+
+
+      const password =
+        String(
+          req.body.password || ""
+        );
+
+
+      if (
+        !login ||
+        !password
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            "Login and password are required."
+
+        });
+
+      }
+
+
+      const [rows] =
+        await db.query(
+
+          `
+          SELECT
+            id,
+            name,
+            phone,
+            email,
+            password
+          FROM customers
+          WHERE phone = ?
+          OR email = ?
+          LIMIT 1
+          `,
+
+          [
+            login,
+            login.toLowerCase()
+          ]
+
+        );
+
+
+      if (!rows.length) {
+
+        return res.status(401).json({
+
+          success: false,
+
+          message:
+            "Invalid login details."
+
+        });
+
+      }
+
+
+      const customer =
+        rows[0];
+
+
+      const passwordHash =
+        customer.password;
+
+
+      const isValid =
+        await new Promise(
+          (resolve, reject) => {
+
+            try {
+
+              const parts =
+                passwordHash.split(":");
+
+
+              if (
+                parts.length !== 2
+              ) {
+
+                return resolve(false);
+
+              }
+
+
+              const salt =
+                Buffer.from(
+                  parts[0],
+                  "hex"
+                );
+
+
+              const storedHash =
+                Buffer.from(
+                  parts[1],
+                  "hex"
+                );
+
+
+              crypto.scrypt(
+
+                password,
+
+                salt,
+
+                storedHash.length,
+
+                (
+                  error,
+                  derivedKey
+                ) => {
+
+                  if (error) {
+
+                    return reject(
+                      error
+                    );
+
+                  }
+
+
+                  resolve(
+
+                    crypto.timingSafeEqual(
+
+                      storedHash,
+
+                      derivedKey
+
+                    )
+
+                  );
+
+                }
+
+              );
+
+
+            } catch (error) {
+
+              reject(error);
+
+            }
+
+          }
+        );
+
+
+      if (!isValid) {
+
+        return res.status(401).json({
+
+          success: false,
+
+          message:
+            "Invalid login details."
+
+        });
+
+      }
+
+
+      const token =
+        createCustomerToken(
+          customer
+        );
+
+
+      res.setHeader(
+
+        "Set-Cookie",
+
+        `customer_session=${encodeURIComponent(token)}; HttpOnly; SameSite=Lax; Max-Age=3600; Path=/`
+
+      );
+
+
+      res.json({
+
+        success: true,
+
+        message:
+          "Login successful.",
+
+        customer: {
+
+          id:
+            customer.id,
+
+          name:
+            customer.name,
+
+          phone:
+            customer.phone,
+
+          email:
+            customer.email
+
+        }
+
+      });
+
+
+    } catch (error) {
+
+      console.error(
+        "CUSTOMER LOGIN ERROR:",
+        error
+      );
+
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          "Unable to login."
+
+      });
+
+    }
+
+  }
+);
+
+
+/* =========================================================
+   CUSTOMER SESSION CHECK
+   ========================================================= */
+
+app.get(
+  "/api/customer/check",
+  requireCustomer,
+  (req, res) => {
+
+    res.json({
+
+      success: true,
+
+      loggedIn: true,
+
+      customer: {
+
+        id:
+          req.customer.id,
+
+        name:
+          req.customer.name,
+
+        phone:
+          req.customer.phone,
+
+        email:
+          req.customer.email
+
+      }
+
+    });
+
+  }
+);
+
+
+/* =========================================================
+   CUSTOMER LOGOUT
+   ========================================================= */
+
+app.post(
+  "/api/customer/logout",
+  (req, res) => {
+
+    try {
+
+      res.setHeader(
+
+        "Set-Cookie",
+
+        "customer_session=; HttpOnly; SameSite=Lax; Max-Age=0; Path=/"
+
+      );
+
+
+      res.json({
+
+        success: true,
+
+        message:
+          "Logged out successfully."
+
+      });
+
+
+    } catch (error) {
+
+      console.error(
+        "CUSTOMER LOGOUT ERROR:",
+        error
+      );
+
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          "Unable to logout."
+
+      });
+
+    }
+
+  }
+);
+
 
 /* =========================================================
    CUSTOMER MENU
    ========================================================= */
 
-app.get("/api/menu", async (req, res) => {
-  try {
+app.get(
+  "/api/menu",
+  async (req, res) => {
 
-    const [rows] = await db.query(`
-      SELECT
-        id AS food_id,
-        name,
-        description,
-        category AS meal_type,
-        price,
-        menu_date,
-        is_available AS available
-      FROM food_items
-      WHERE menu_date = CURDATE()
-      AND is_available = TRUE
-      ORDER BY
-        CASE category
-          WHEN 'Breakfast' THEN 1
-          WHEN 'Lunch' THEN 2
-          WHEN 'Dinner' THEN 3
-          WHEN 'Tea & Snacks' THEN 4
-          ELSE 5
-        END,
-        name
-    `);
+    try {
 
-    res.json(rows);
+      const [rows] =
+        await db.query(`
 
-  } catch (error) {
+          SELECT
 
-    console.error("MENU ERROR:", error);
+            id AS food_id,
 
-    res.status(500).json({
-      success: false,
-      message: "Unable to load today's menu."
-    });
+            name,
+
+            description,
+
+            category AS meal_type,
+
+            price,
+
+            menu_date,
+
+            is_available AS available
+
+          FROM food_items
+
+          WHERE menu_date = CURDATE()
+
+          AND is_available = TRUE
+
+          ORDER BY
+
+            CASE category
+
+              WHEN 'Breakfast'
+              THEN 1
+
+              WHEN 'Lunch'
+              THEN 2
+
+              WHEN 'Dinner'
+              THEN 3
+
+              WHEN 'Tea & Snacks'
+              THEN 4
+
+              ELSE 5
+
+            END,
+
+            name
+
+        `);
+
+
+      res.json(rows);
+
+
+    } catch (error) {
+
+      console.error(
+        "MENU ERROR:",
+        error
+      );
+
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          "Unable to load today's menu."
+
+      });
+
+    }
+
   }
-});
+);
+
 
 /* =========================================================
    PLACE CUSTOMER ORDER
    ========================================================= */
 
-app.post("/api/orders", async (req, res) => {
+app.post(
+  "/api/orders",
+  async (req, res) => {
 
-  const connection = await db.getConnection();
+    const connection =
+      await db.getConnection();
 
-  try {
 
-    const customerName =
-      String(req.body.customer_name || "").trim();
+    try {
 
-    const phone =
-      String(req.body.phone || "").trim();
+      const customerName =
+        String(
+          req.body.customer_name || ""
+        ).trim();
 
-    const orderType =
-      String(req.body.order_type || "").trim();
 
-    const arrivalTime =
-      String(req.body.arrival_time || "").trim();
+      const phone =
+        String(
+          req.body.phone || ""
+        ).trim();
 
-    const paymentMethod =
-      String(
-        req.body.payment_method ||
-        "Cash Payment"
-      ).trim();
 
-    const items = Array.isArray(req.body.items)
-      ? req.body.items
-      : [];
+      const orderType =
+        String(
+          req.body.order_type || ""
+        ).trim();
 
-    if (!customerName) {
-      return res.status(400).json({
-        success: false,
-        message: "Customer name is required."
-      });
-    }
 
-    if (!/^\d{10}$/.test(phone)) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Please enter a valid 10-digit phone number."
-      });
-    }
+      const arrivalTime =
+        String(
+          req.body.arrival_time || ""
+        ).trim();
 
-    if (
-      orderType !== "Dine-in" &&
-      orderType !== "Parcel"
-    ) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Please select Dine-in or Parcel."
-      });
-    }
 
-    if (!arrivalTime) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Expected arrival time is required."
-      });
-    }
+      const paymentMethod =
+        String(
+          req.body.payment_method ||
+          "Cash Payment"
+        ).trim();
 
-    if (!/^\d{2}:\d{2}$/.test(arrivalTime)) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Invalid arrival time."
-      });
-    }
 
-    if (!items.length) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Your cart is empty."
-      });
-    }
+      const items =
+        Array.isArray(req.body.items)
+          ? req.body.items
+          : [];
 
-    await connection.beginTransaction();
 
-    let totalAmount = 0;
+      if (!customerName) {
 
-    const verifiedItems = [];
+        return res.status(400).json({
 
-    for (const item of items) {
+          success: false,
 
-      const foodId = Number(item.food_id);
-      const quantity = Number(item.qty);
+          message:
+            "Customer name is required."
+
+        });
+
+      }
+
 
       if (
-        !Number.isInteger(foodId) ||
-        !Number.isInteger(quantity) ||
-        quantity < 1 ||
-        quantity > 50
+        !/^\d{10}$/.test(phone)
       ) {
 
-        await connection.rollback();
-
         return res.status(400).json({
+
           success: false,
+
           message:
-            "Invalid food item or quantity."
+            "Please enter a valid 10-digit phone number."
+
         });
+
       }
 
-      const [foodRows] =
+
+      if (
+        orderType !== "Dine-in" &&
+        orderType !== "Parcel"
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            "Please select Dine-in or Parcel."
+
+        });
+
+      }
+
+
+      if (!arrivalTime) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            "Expected arrival time is required."
+
+        });
+
+      }
+
+
+      if (
+        !/^\d{2}:\d{2}$/.test(
+          arrivalTime
+        )
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            "Invalid arrival time."
+
+        });
+
+      }
+
+
+      if (!items.length) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            "Your cart is empty."
+
+        });
+
+      }
+
+
+      await connection.beginTransaction();
+
+
+      let totalAmount = 0;
+      const PARCEL_CHARGE = 5;
+
+      const verifiedItems = [];
+
+
+      for (const item of items) {
+
+        const foodId =
+          Number(item.food_id);
+
+
+        const quantity =
+          Number(item.qty);
+
+
+        if (
+
+          !Number.isInteger(foodId) ||
+
+          !Number.isInteger(quantity) ||
+
+          quantity < 1 ||
+
+          quantity > 50
+
+        ) {
+
+          await connection.rollback();
+
+
+          return res.status(400).json({
+
+            success: false,
+
+            message:
+              "Invalid food item or quantity."
+
+          });
+
+        }
+
+
+        const [foodRows] =
+          await connection.query(
+
+            `
+            SELECT
+              id,
+              name,
+              price
+            FROM food_items
+            WHERE id = ?
+            AND menu_date = CURDATE()
+            AND is_available = TRUE
+            `,
+
+            [foodId]
+
+          );
+
+
+        if (!foodRows.length) {
+
+          await connection.rollback();
+
+
+          return res.status(400).json({
+
+            success: false,
+
+            message:
+              "One or more selected food items are unavailable."
+
+          });
+
+        }
+
+
+        const food =
+          foodRows[0];
+
+
+        const itemTotal =
+          Number(food.price) *
+          quantity;
+
+
+        totalAmount +=
+          itemTotal;
+
+
+        verifiedItems.push({
+
+          food_id:
+            food.id,
+
+          name:
+            food.name,
+
+          price:
+            Number(food.price),
+
+          quantity
+
+        });
+
+      }
+
+
+      /*
+         Parcel charge is currently NOT added here.
+         It can be added later without changing
+         the customer account system.
+      */
+     // Add ₹5 Parcel charge
+if (orderType === "Parcel") {
+  totalAmount += 5;
+}
+
+
+      const [orderResult] =
         await connection.query(
+
           `
-          SELECT
-            id,
-            name,
-            price
-          FROM food_items
-          WHERE id = ?
-          AND menu_date = CURDATE()
-          AND is_available = TRUE
+          INSERT INTO orders
+          (
+            customer_name,
+            phone,
+            total_amount,
+            status,
+            order_type,
+            arrival_time
+          )
+          VALUES (?, ?, ?, 'New', ?, ?)
           `,
-          [foodId]
+
+          [
+
+            customerName,
+
+            phone,
+
+            totalAmount.toFixed(2),
+
+            orderType,
+
+            arrivalTime
+
+          ]
+
         );
 
-      if (!foodRows.length) {
 
-        await connection.rollback();
+      const orderId =
+        orderResult.insertId;
 
-        return res.status(400).json({
-          success: false,
-          message:
-            "One or more selected food items are unavailable."
-        });
+
+      for (
+        const item of verifiedItems
+      ) {
+
+        await connection.query(
+
+          `
+          INSERT INTO order_items
+          (
+            order_id,
+            food_item_id,
+            quantity,
+            price
+          )
+          VALUES (?, ?, ?, ?)
+          `,
+
+          [
+
+            orderId,
+
+            item.food_id,
+
+            item.quantity,
+
+            item.price
+
+          ]
+
+        );
+
       }
 
-      const food = foodRows[0];
 
-      const itemTotal =
-        Number(food.price) * quantity;
+      await connection.commit();
 
-      totalAmount += itemTotal;
 
-      verifiedItems.push({
-        food_id: food.id,
-        name: food.name,
-        price: Number(food.price),
-        quantity
+      res.status(201).json({
+
+        success: true,
+
+        message:
+          "Order placed successfully.",
+
+        order_id:
+          orderId,
+
+        customer_name:
+          customerName,
+
+        phone,
+
+        order_type:
+          orderType,
+
+        arrival_time:
+          arrivalTime,
+
+        payment_method:
+          paymentMethod,
+
+        total_amount:
+          Number(
+            totalAmount.toFixed(2)
+          ),
+
+        status:
+          "New"
+
       });
 
-    }
 
-    const [orderResult] =
-      await connection.query(
-        `
-        INSERT INTO orders
-        (
-          customer_name,
-          phone,
-          total_amount,
-          status,
-          order_type,
-          arrival_time
-        )
-        VALUES (?, ?, ?, 'New', ?, ?)
-        `,
-        [
-          customerName,
-          phone,
-          totalAmount.toFixed(2),
-          orderType,
-          arrivalTime
-        ]
+    } catch (error) {
+
+      await connection.rollback();
+
+
+      console.error(
+        "PLACE ORDER ERROR:",
+        error
       );
 
-    const orderId =
-      orderResult.insertId;
 
-    for (const item of verifiedItems) {
+      res.status(500).json({
 
-      await connection.query(
-        `
-        INSERT INTO order_items
-        (
-          order_id,
-          food_item_id,
-          quantity,
-          price
-        )
-        VALUES (?, ?, ?, ?)
-        `,
-        [
-          orderId,
-          item.food_id,
-          item.quantity,
-          item.price
-        ]
-      );
+        success: false,
+
+        message:
+          "Unable to place your order."
+
+      });
+
+
+    } finally {
+
+      connection.release();
 
     }
-
-    await connection.commit();
-
-    res.status(201).json({
-
-      success: true,
-
-      message:
-        "Order placed successfully.",
-
-      order_id:
-        orderId,
-
-      customer_name:
-        customerName,
-
-      phone,
-
-      order_type:
-        orderType,
-
-      arrival_time:
-        arrivalTime,
-
-      payment_method:
-        paymentMethod,
-
-      total_amount:
-        Number(
-          totalAmount.toFixed(2)
-        ),
-
-      status:
-        "New"
-
-    });
-
-  } catch (error) {
-
-    await connection.rollback();
-
-    console.error(
-      "PLACE ORDER ERROR:",
-      error
-    );
-
-    res.status(500).json({
-      success: false,
-      message:
-        "Unable to place your order."
-    });
-
-  } finally {
-
-    connection.release();
 
   }
+);
 
-});
 
 /* =========================================================
    TRACK SINGLE ORDER
    ========================================================= */
 
-app.get("/api/orders/:id", async (req, res) => {
+app.get(
+  "/api/orders/:id",
+  async (req, res) => {
 
-  try {
+    try {
 
-    const orderId =
-      Number(req.params.id);
+      const orderId =
+        Number(
+          req.params.id
+        );
 
-    if (!Number.isInteger(orderId)) {
 
-      return res.status(400).json({
-        success: false,
-        message:
-          "Invalid order number."
-      });
+      if (
+        !Number.isInteger(orderId)
+      ) {
 
-    }
+        return res.status(400).json({
 
-    const [orders] =
-      await db.query(
-        `
-        SELECT
-          id AS order_id,
-          customer_name,
-          phone,
-          total_amount,
-          status,
-          order_type,
-          arrival_time,
-          created_at
-        FROM orders
-        WHERE id = ?
-        `,
-        [orderId]
-      );
+          success: false,
 
-    if (!orders.length) {
+          message:
+            "Invalid order number."
 
-      return res.status(404).json({
-        success: false,
-        message:
-          "Order not found."
-      });
+        });
 
-    }
+      }
 
-    const order = orders[0];
 
-    const [items] =
-      await db.query(
-        `
-        SELECT
-          oi.food_item_id,
-          f.name AS food_name,
-          oi.quantity,
-          oi.price AS unit_price
-        FROM order_items oi
-        JOIN food_items f
-          ON oi.food_item_id = f.id
-        WHERE oi.order_id = ?
-        `,
-        [orderId]
-      );
+      const [orders] =
+        await db.query(
 
-    order.items = items;
+          `
+          SELECT
 
-    res.json({
-      success: true,
-      order
-    });
+            id AS order_id,
 
-  } catch (error) {
+            customer_name,
 
-    console.error(
-      "TRACK ORDER ERROR:",
-      error
-    );
+            phone,
 
-    res.status(500).json({
-      success: false,
-      message:
-        "Unable to load order."
-    });
+            total_amount,
 
-  }
+            status,
 
-});
+            order_type,
 
-/* =========================================================
-   MY ORDERS BY PHONE
-   ========================================================= */
+            arrival_time,
 
-app.get("/api/my-orders/:phone", async (req, res) => {
+            created_at
 
-  try {
+          FROM orders
 
-    const phone =
-      String(req.params.phone || "").trim();
+          WHERE id = ?
 
-    if (!/^\d{10}$/.test(phone)) {
+          `,
 
-      return res.status(400).json({
-        success: false,
-        message:
-          "Please enter a valid 10-digit phone number."
-      });
+          [orderId]
 
-    }
+        );
 
-    const [orders] =
-      await db.query(
-        `
-        SELECT
-          id AS order_id,
-          customer_name,
-          phone,
-          total_amount,
-          status,
-          order_type,
-          arrival_time,
-          created_at
-        FROM orders
-        WHERE phone = ?
-        ORDER BY created_at DESC
-        `,
-        [phone]
-      );
 
-    for (const order of orders) {
+      if (!orders.length) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            "Order not found."
+
+        });
+
+      }
+
+
+      const order =
+        orders[0];
+
 
       const [items] =
         await db.query(
+
           `
           SELECT
+
             oi.food_item_id,
+
             f.name AS food_name,
+
             oi.quantity,
+
             oi.price AS unit_price
+
           FROM order_items oi
+
           JOIN food_items f
+
             ON oi.food_item_id = f.id
+
           WHERE oi.order_id = ?
+
           `,
-          [order.order_id]
+
+          [orderId]
+
         );
 
-      order.items = items;
+
+      order.items =
+        items;
+
+
+      res.json({
+
+        success: true,
+
+        order
+
+      });
+
+
+    } catch (error) {
+
+      console.error(
+        "TRACK ORDER ERROR:",
+        error
+      );
+
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          "Unable to load order."
+
+      });
 
     }
 
-    res.json({
-      success: true,
-      phone,
-      total_orders:
-        orders.length,
-      orders
-    });
+  }
+);
 
-  } catch (error) {
 
-    console.error(
-      "MY ORDERS ERROR:",
-      error
-    );
+/* =========================================================
+   LOGGED-IN CUSTOMER MY ORDERS
+   ========================================================= */
 
-    res.status(500).json({
-      success: false,
-      message:
-        "Unable to load your orders."
-    });
+app.get(
+  "/api/customer/my-orders",
+  requireCustomer,
+  async (req, res) => {
+
+    try {
+
+      const phone =
+        req.customer.phone;
+
+
+      const [orders] =
+        await db.query(
+
+          `
+          SELECT
+
+            id AS order_id,
+
+            customer_name,
+
+            phone,
+
+            total_amount,
+
+            status,
+
+            order_type,
+
+            arrival_time,
+
+            created_at
+
+          FROM orders
+
+          WHERE phone = ?
+
+          ORDER BY created_at DESC
+
+          `,
+
+          [phone]
+
+        );
+
+
+      for (
+        const order of orders
+      ) {
+
+        const [items] =
+          await db.query(
+
+            `
+            SELECT
+
+              oi.food_item_id,
+
+              f.name AS food_name,
+
+              oi.quantity,
+
+              oi.price AS unit_price
+
+            FROM order_items oi
+
+            JOIN food_items f
+
+              ON oi.food_item_id = f.id
+
+            WHERE oi.order_id = ?
+
+            `,
+
+            [order.order_id]
+
+          );
+
+
+        order.items =
+          items;
+
+      }
+
+
+      res.json({
+
+        success: true,
+
+        total_orders:
+          orders.length,
+
+        orders
+
+      });
+
+
+    } catch (error) {
+
+      console.error(
+        "CUSTOMER MY ORDERS ERROR:",
+        error
+      );
+
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          "Unable to load your orders."
+
+      });
+
+    }
 
   }
+);
 
-});
+
+/* =========================================================
+   OLD MY ORDERS BY PHONE
+   ========================================================= */
+
+app.get(
+  "/api/my-orders/:phone",
+  async (req, res) => {
+
+    try {
+
+      const phone =
+        String(
+          req.params.phone || ""
+        ).trim();
+
+
+      if (
+        !/^\d{10}$/.test(phone)
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            "Please enter a valid 10-digit phone number."
+
+        });
+
+      }
+
+
+      const [orders] =
+        await db.query(
+
+          `
+          SELECT
+
+            id AS order_id,
+
+            customer_name,
+
+            phone,
+
+            total_amount,
+
+            status,
+
+            order_type,
+
+            arrival_time,
+
+            created_at
+
+          FROM orders
+
+          WHERE phone = ?
+
+          ORDER BY created_at DESC
+
+          `,
+
+          [phone]
+
+        );
+
+
+      for (
+        const order of orders
+      ) {
+
+        const [items] =
+          await db.query(
+
+            `
+            SELECT
+
+              oi.food_item_id,
+
+              f.name AS food_name,
+
+              oi.quantity,
+
+              oi.price AS unit_price
+
+            FROM order_items oi
+
+            JOIN food_items f
+
+              ON oi.food_item_id = f.id
+
+            WHERE oi.order_id = ?
+
+            `,
+
+            [order.order_id]
+
+          );
+
+
+        order.items =
+          items;
+
+      }
+
+
+      res.json({
+
+        success: true,
+
+        phone,
+
+        total_orders:
+          orders.length,
+
+        orders
+
+      });
+
+
+    } catch (error) {
+
+      console.error(
+        "MY ORDERS ERROR:",
+        error
+      );
+
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          "Unable to load your orders."
+
+      });
+
+    }
+
+  }
+);
+
 
 /* =========================================================
    ADMIN - GET ALL ORDERS
@@ -668,43 +2045,73 @@ app.get(
 
       const [orders] =
         await db.query(`
+
           SELECT
+
             id AS order_id,
+
             customer_name,
+
             phone,
+
             total_amount,
+
             status,
+
             order_type,
+
             arrival_time,
+
             created_at
+
           FROM orders
-          ORDER BY
-            created_at DESC
+
+          ORDER BY created_at DESC
+
         `);
 
-      for (const order of orders) {
+
+      for (
+        const order of orders
+      ) {
 
         const [items] =
           await db.query(
+
             `
             SELECT
+
               oi.food_item_id,
+
               f.name AS food_name,
+
               oi.quantity,
+
               oi.price AS unit_price
+
             FROM order_items oi
+
             JOIN food_items f
+
               ON oi.food_item_id = f.id
+
             WHERE oi.order_id = ?
+
             `,
+
             [order.order_id]
+
           );
 
-        order.items = items;
+
+        order.items =
+          items;
 
       }
 
+
       res.json(orders);
+
 
     } catch (error) {
 
@@ -713,16 +2120,21 @@ app.get(
         error
       );
 
+
       res.status(500).json({
+
         success: false,
+
         message:
           "Unable to load customer orders."
+
       });
 
     }
 
   }
 );
+
 
 /* =========================================================
    ADMIN - UPDATE ORDER STATUS
@@ -736,64 +2148,103 @@ app.patch(
     try {
 
       const orderId =
-        Number(req.params.id);
+        Number(
+          req.params.id
+        );
+
 
       const status =
         String(
           req.body.status || ""
         ).trim();
 
+
       const allowedStatuses = [
+
         "New",
+
         "Accepted",
+
         "Preparing",
+
         "Ready",
+
         "Completed",
+
         "Cancelled"
+
       ];
 
-      if (!Number.isInteger(orderId)) {
+
+      if (
+        !Number.isInteger(orderId)
+      ) {
 
         return res.status(400).json({
+
           success: false,
+
           message:
             "Invalid order number."
+
         });
 
       }
 
-      if (!allowedStatuses.includes(status)) {
+
+      if (
+        !allowedStatuses.includes(
+          status
+        )
+      ) {
 
         return res.status(400).json({
+
           success: false,
+
           message:
             "Invalid order status."
+
         });
 
       }
+
 
       const [result] =
         await db.query(
+
           `
           UPDATE orders
+
           SET status = ?
+
           WHERE id = ?
+
           `,
+
           [
             status,
             orderId
           ]
+
         );
 
-      if (result.affectedRows === 0) {
+
+      if (
+        result.affectedRows === 0
+      ) {
 
         return res.status(404).json({
+
           success: false,
+
           message:
             "Order not found."
+
         });
 
       }
+
 
       res.json({
 
@@ -809,6 +2260,7 @@ app.patch(
 
       });
 
+
     } catch (error) {
 
       console.error(
@@ -816,16 +2268,21 @@ app.patch(
         error
       );
 
+
       res.status(500).json({
+
         success: false,
+
         message:
           "Unable to update order status."
+
       });
 
     }
 
   }
 );
+
 
 /* =========================================================
    ADMIN - DAILY ANALYTICS
@@ -843,44 +2300,68 @@ app.get(
           req.query.date || ""
         ).trim();
 
+
       const selectedDate =
         /^\d{4}-\d{2}-\d{2}$/.test(date)
+
           ? date
+
           : new Date()
               .toISOString()
               .slice(0, 10);
 
+
       const [dateSummaryRows] =
         await db.query(
+
           `
           SELECT
+
             COUNT(*) AS totalOrders,
+
             COALESCE(
               SUM(total_amount),
               0
             ) AS totalSales
+
           FROM orders
+
           WHERE DATE(created_at) = ?
+
           AND status = 'Completed'
+
           `,
+
           [selectedDate]
+
         );
+
 
       const dateSummary =
         dateSummaryRows[0] || {
+
           totalOrders: 0,
+
           totalSales: 0
+
         };
+
 
       const [categoryRows] =
         await db.query(
+
           `
           SELECT
 
             CASE
-              WHEN f.category = 'Tea & Snacks'
+
+              WHEN f.category =
+                'Tea & Snacks'
+
               THEN 'Snacks'
+
               ELSE f.category
+
             END AS category,
 
             COALESCE(
@@ -904,22 +2385,33 @@ app.get(
             ON oi.food_item_id = f.id
 
           WHERE DATE(o.created_at) = ?
+
           AND o.status = 'Completed'
 
-          GROUP BY
-            f.category
+          GROUP BY f.category
 
           ORDER BY
+
             CASE f.category
+
               WHEN 'Breakfast' THEN 1
+
               WHEN 'Tea & Snacks' THEN 2
+
               WHEN 'Lunch' THEN 3
+
               WHEN 'Dinner' THEN 4
+
               ELSE 5
+
             END
+
           `,
+
           [selectedDate]
+
         );
+
 
       const categoryMap = {
 
@@ -945,27 +2437,35 @@ app.get(
 
       };
 
-      categoryRows.forEach(row => {
 
-        if (categoryMap[row.category]) {
+      categoryRows.forEach(
+        row => {
 
-          categoryMap[row.category] = {
+          if (
+            categoryMap[row.category]
+          ) {
 
-            quantitySold:
-              Number(
-                row.quantitySold || 0
-              ),
+            categoryMap[
+              row.category
+            ] = {
 
-            sales:
-              Number(
-                row.sales || 0
-              )
+              quantitySold:
+                Number(
+                  row.quantitySold || 0
+                ),
 
-          };
+              sales:
+                Number(
+                  row.sales || 0
+                )
+
+            };
+
+          }
 
         }
+      );
 
-      });
 
       const categories = [
 
@@ -974,13 +2474,17 @@ app.get(
             "Breakfast",
 
           quantity:
-            categoryMap.Breakfast.quantitySold,
+            categoryMap.Breakfast
+              .quantitySold,
 
           quantitySold:
-            categoryMap.Breakfast.quantitySold,
+            categoryMap.Breakfast
+              .quantitySold,
 
           sales:
-            categoryMap.Breakfast.sales
+            categoryMap.Breakfast
+              .sales
+
         },
 
         {
@@ -988,13 +2492,17 @@ app.get(
             "Snacks",
 
           quantity:
-            categoryMap.Snacks.quantitySold,
+            categoryMap.Snacks
+              .quantitySold,
 
           quantitySold:
-            categoryMap.Snacks.quantitySold,
+            categoryMap.Snacks
+              .quantitySold,
 
           sales:
-            categoryMap.Snacks.sales
+            categoryMap.Snacks
+              .sales
+
         },
 
         {
@@ -1002,13 +2510,17 @@ app.get(
             "Lunch",
 
           quantity:
-            categoryMap.Lunch.quantitySold,
+            categoryMap.Lunch
+              .quantitySold,
 
           quantitySold:
-            categoryMap.Lunch.quantitySold,
+            categoryMap.Lunch
+              .quantitySold,
 
           sales:
-            categoryMap.Lunch.sales
+            categoryMap.Lunch
+              .sales
+
         },
 
         {
@@ -1016,20 +2528,25 @@ app.get(
             "Dinner",
 
           quantity:
-            categoryMap.Dinner.quantitySold,
+            categoryMap.Dinner
+              .quantitySold,
 
           quantitySold:
-            categoryMap.Dinner.quantitySold,
+            categoryMap.Dinner
+              .quantitySold,
 
           sales:
-            categoryMap.Dinner.sales
+            categoryMap.Dinner
+              .sales
+
         }
 
       ];
 
+
       const [monthlyRows] =
-        await db.query(
-          `
+        await db.query(`
+
           SELECT
 
             DATE_FORMAT(
@@ -1057,12 +2574,13 @@ app.get(
           ORDER BY month DESC
 
           LIMIT 12
-          `
-        );
+
+        `);
+
 
       const [currentMonthRows] =
-        await db.query(
-          `
+        await db.query(`
+
           SELECT
 
             COUNT(*) AS totalOrders,
@@ -1081,27 +2599,44 @@ app.get(
 
           AND MONTH(created_at) =
               MONTH(CURDATE())
-          `
-        );
+
+        `);
+
 
       const [dateOrders] =
         await db.query(
+
           `
           SELECT
+
             id AS order_id,
+
             customer_name,
+
             phone,
+
             total_amount,
+
             status,
+
             order_type,
+
             arrival_time,
+
             created_at
+
           FROM orders
+
           WHERE DATE(created_at) = ?
+
           ORDER BY created_at DESC
+
           `,
+
           [selectedDate]
+
         );
+
 
       res.json({
 
@@ -1132,10 +2667,14 @@ app.get(
         breakfast:
           categories.find(
             item =>
-              item.category === "Breakfast"
+              item.category ===
+              "Breakfast"
           ) || {
+
             quantitySold: 0,
+
             sales: 0
+
           },
 
         monthly:
@@ -1158,17 +2697,20 @@ app.get(
 
         currentMonthSales:
           Number(
-            currentMonthRows[0]?.totalSales || 0
+            currentMonthRows[0]
+              ?.totalSales || 0
           ),
 
         currentMonthOrders:
           Number(
-            currentMonthRows[0]?.totalOrders || 0
+            currentMonthRows[0]
+              ?.totalOrders || 0
           ),
 
         dateOrders
 
       });
+
 
     } catch (error) {
 
@@ -1177,10 +2719,14 @@ app.get(
         error
       );
 
+
       res.status(500).json({
+
         success: false,
+
         message:
           "Unable to load analytics."
+
       });
 
     }
@@ -1188,9 +2734,9 @@ app.get(
   }
 );
 
+
 /* =========================================================
    ADMIN - MONTHLY ANALYTICS
-   ONLY COMPLETED ORDERS
    ========================================================= */
 
 app.get(
@@ -1205,21 +2751,27 @@ app.get(
           req.query.month || ""
         ).trim();
 
+
       if (
         !month ||
         !/^\d{4}-\d{2}$/.test(month)
       ) {
 
         return res.status(400).json({
+
           success: false,
+
           message:
             "Invalid month. Use YYYY-MM."
+
         });
 
       }
 
+
       const [summaryRows] =
         await db.query(
+
           `
           SELECT
 
@@ -1238,25 +2790,39 @@ app.get(
             created_at,
             '%Y-%m'
           ) = ?
+
           `,
+
           [month]
+
         );
+
 
       const summary =
         summaryRows[0] || {
+
           totalOrders: 0,
+
           totalSales: 0
+
         };
+
 
       const [categoryRows] =
         await db.query(
+
           `
           SELECT
 
             CASE
-              WHEN f.category = 'Tea & Snacks'
+
+              WHEN f.category =
+                'Tea & Snacks'
+
               THEN 'Snacks'
+
               ELSE f.category
+
             END AS category,
 
             COALESCE(
@@ -1286,20 +2852,30 @@ app.get(
             '%Y-%m'
           ) = ?
 
-          GROUP BY
-            f.category
+          GROUP BY f.category
 
           ORDER BY
+
             CASE f.category
+
               WHEN 'Breakfast' THEN 1
+
               WHEN 'Tea & Snacks' THEN 2
+
               WHEN 'Lunch' THEN 3
+
               WHEN 'Dinner' THEN 4
+
               ELSE 5
+
             END
+
           `,
+
           [month]
+
         );
+
 
       const categoryMap = {
 
@@ -1325,27 +2901,35 @@ app.get(
 
       };
 
-      categoryRows.forEach(row => {
 
-        if (categoryMap[row.category]) {
+      categoryRows.forEach(
+        row => {
 
-          categoryMap[row.category] = {
+          if (
+            categoryMap[row.category]
+          ) {
 
-            quantity:
-              Number(
-                row.quantity || 0
-              ),
+            categoryMap[
+              row.category
+            ] = {
 
-            sales:
-              Number(
-                row.sales || 0
-              )
+              quantity:
+                Number(
+                  row.quantity || 0
+                ),
 
-          };
+              sales:
+                Number(
+                  row.sales || 0
+                )
+
+            };
+
+          }
 
         }
+      );
 
-      });
 
       res.json({
 
@@ -1373,10 +2957,13 @@ app.get(
               "Breakfast",
 
             quantity:
-              categoryMap.Breakfast.quantity,
+              categoryMap.Breakfast
+                .quantity,
 
             sales:
-              categoryMap.Breakfast.sales
+              categoryMap.Breakfast
+                .sales
+
           },
 
           {
@@ -1384,10 +2971,13 @@ app.get(
               "Snacks",
 
             quantity:
-              categoryMap.Snacks.quantity,
+              categoryMap.Snacks
+                .quantity,
 
             sales:
-              categoryMap.Snacks.sales
+              categoryMap.Snacks
+                .sales
+
           },
 
           {
@@ -1395,10 +2985,13 @@ app.get(
               "Lunch",
 
             quantity:
-              categoryMap.Lunch.quantity,
+              categoryMap.Lunch
+                .quantity,
 
             sales:
-              categoryMap.Lunch.sales
+              categoryMap.Lunch
+                .sales
+
           },
 
           {
@@ -1406,15 +2999,19 @@ app.get(
               "Dinner",
 
             quantity:
-              categoryMap.Dinner.quantity,
+              categoryMap.Dinner
+                .quantity,
 
             sales:
-              categoryMap.Dinner.sales
+              categoryMap.Dinner
+                .sales
+
           }
 
         ]
 
       });
+
 
     } catch (error) {
 
@@ -1422,6 +3019,7 @@ app.get(
         "MONTHLY ANALYTICS ERROR:",
         error
       );
+
 
       res.status(500).json({
 
@@ -1440,6 +3038,7 @@ app.get(
   }
 );
 
+
 /* =========================================================
    ADMIN - ADD MENU ITEM
    ========================================================= */
@@ -1456,6 +3055,7 @@ app.post(
           req.body.menu_date || ""
         ).trim();
 
+
       const category =
         String(
           req.body.meal_type ||
@@ -1463,45 +3063,72 @@ app.post(
           ""
         ).trim();
 
+
       const name =
         String(
           req.body.name || ""
         ).trim();
+
 
       const description =
         String(
           req.body.description || ""
         ).trim();
 
+
       const price =
-        Number(req.body.price);
+        Number(
+          req.body.price
+        );
+
 
       const allowedCategories = [
+
         "Breakfast",
+
         "Lunch",
+
         "Dinner",
+
         "Tea & Snacks"
+
       ];
 
-      if (!menuDate || !name) {
+
+      if (
+        !menuDate ||
+        !name
+      ) {
 
         return res.status(400).json({
+
           success: false,
+
           message:
             "Menu date and food name are required."
+
         });
 
       }
 
-      if (!allowedCategories.includes(category)) {
+
+      if (
+        !allowedCategories.includes(
+          category
+        )
+      ) {
 
         return res.status(400).json({
+
           success: false,
+
           message:
             "Invalid meal category."
+
         });
 
       }
+
 
       if (
         !Number.isFinite(price) ||
@@ -1509,14 +3136,19 @@ app.post(
       ) {
 
         return res.status(400).json({
+
           success: false,
+
           message:
             "Please enter a valid price."
+
         });
 
       }
 
+
       await db.query(
+
         `
         INSERT INTO food_items
         (
@@ -1529,14 +3161,23 @@ app.post(
         )
         VALUES (?, ?, ?, ?, ?, TRUE)
         `,
+
         [
+
           name,
+
           description,
+
           category,
+
           price,
+
           menuDate
+
         ]
+
       );
+
 
       res.status(201).json({
 
@@ -1547,6 +3188,7 @@ app.post(
 
       });
 
+
     } catch (error) {
 
       console.error(
@@ -1554,16 +3196,21 @@ app.post(
         error
       );
 
+
       res.status(500).json({
+
         success: false,
+
         message:
           "Unable to add menu item."
+
       });
 
     }
 
   }
 );
+
 
 /* =========================================================
    ADMIN - GET ALL MENU ITEMS
@@ -1578,28 +3225,50 @@ app.get(
 
       const [rows] =
         await db.query(`
+
           SELECT
+
             id AS food_id,
+
             name,
+
             description,
+
             category AS meal_type,
+
             price,
+
             menu_date,
+
             is_available AS available
+
           FROM food_items
+
           ORDER BY
+
             menu_date DESC,
+
             CASE category
+
               WHEN 'Breakfast' THEN 1
+
               WHEN 'Lunch' THEN 2
+
               WHEN 'Dinner' THEN 3
+
               WHEN 'Tea & Snacks' THEN 4
+
               ELSE 5
+
             END,
+
             name
+
         `);
 
+
       res.json(rows);
+
 
     } catch (error) {
 
@@ -1608,16 +3277,21 @@ app.get(
         error
       );
 
+
       res.status(500).json({
+
         success: false,
+
         message:
           "Unable to load menu."
+
       });
 
     }
 
   }
 );
+
 
 /* =========================================================
    ADMIN - EDIT MENU ITEM
@@ -1631,17 +3305,22 @@ app.put(
     try {
 
       const foodId =
-        Number(req.params.id);
+        Number(
+          req.params.id
+        );
+
 
       const name =
         String(
           req.body.name || ""
         ).trim();
 
+
       const description =
         String(
           req.body.description || ""
         ).trim();
+
 
       const category =
         String(
@@ -1650,50 +3329,82 @@ app.put(
           ""
         ).trim();
 
+
       const price =
-        Number(req.body.price);
+        Number(
+          req.body.price
+        );
+
 
       const menuDate =
         String(
           req.body.menu_date || ""
         ).trim();
 
+
       const allowedCategories = [
+
         "Breakfast",
+
         "Lunch",
+
         "Dinner",
+
         "Tea & Snacks"
+
       ];
 
-      if (!Number.isInteger(foodId)) {
+
+      if (
+        !Number.isInteger(foodId)
+      ) {
 
         return res.status(400).json({
+
           success: false,
+
           message:
             "Invalid food item."
+
         });
 
       }
 
-      if (!name || !menuDate) {
+
+      if (
+        !name ||
+        !menuDate
+      ) {
 
         return res.status(400).json({
+
           success: false,
+
           message:
             "Food name and menu date are required."
+
         });
 
       }
 
-      if (!allowedCategories.includes(category)) {
+
+      if (
+        !allowedCategories.includes(
+          category
+        )
+      ) {
 
         return res.status(400).json({
+
           success: false,
+
           message:
             "Invalid meal category."
+
         });
 
       }
+
 
       if (
         !Number.isFinite(price) ||
@@ -1701,52 +3412,83 @@ app.put(
       ) {
 
         return res.status(400).json({
+
           success: false,
+
           message:
             "Invalid price."
+
         });
 
       }
 
+
       const [result] =
         await db.query(
+
           `
           UPDATE food_items
 
           SET
+
             name = ?,
+
             description = ?,
+
             category = ?,
+
             price = ?,
+
             menu_date = ?
 
           WHERE id = ?
+
           `,
+
           [
+
             name,
+
             description,
+
             category,
+
             price,
+
             menuDate,
+
             foodId
+
           ]
+
         );
 
-      if (result.affectedRows === 0) {
+
+      if (
+        result.affectedRows === 0
+      ) {
 
         return res.status(404).json({
+
           success: false,
+
           message:
             "Menu item not found."
+
         });
 
       }
 
+
       res.json({
+
         success: true,
+
         message:
           "Menu item updated successfully."
+
       });
+
 
     } catch (error) {
 
@@ -1755,16 +3497,21 @@ app.put(
         error
       );
 
+
       res.status(500).json({
+
         success: false,
+
         message:
           "Unable to update menu item."
+
       });
 
     }
 
   }
 );
+
 
 /* =========================================================
    ADMIN - DELETE MENU ITEM
@@ -1778,44 +3525,67 @@ app.delete(
     try {
 
       const foodId =
-        Number(req.params.id);
+        Number(
+          req.params.id
+        );
 
-      if (!Number.isInteger(foodId)) {
+
+      if (
+        !Number.isInteger(foodId)
+      ) {
 
         return res.status(400).json({
+
           success: false,
+
           message:
             "Invalid food item."
+
         });
 
       }
+
 
       try {
 
         const [result] =
           await db.query(
+
             `
             DELETE FROM food_items
             WHERE id = ?
             `,
+
             [foodId]
+
           );
 
-        if (result.affectedRows === 0) {
+
+        if (
+          result.affectedRows === 0
+        ) {
 
           return res.status(404).json({
+
             success: false,
+
             message:
               "Menu item not found."
+
           });
 
         }
 
+
         return res.json({
+
           success: true,
+
           message:
             "Menu item deleted successfully."
+
         });
+
 
       } catch (deleteError) {
 
@@ -1825,15 +3595,20 @@ app.delete(
         ) {
 
           await db.query(
+
             `
             UPDATE food_items
 
             SET is_available = FALSE
 
             WHERE id = ?
+
             `,
+
             [foodId]
+
           );
+
 
           return res.json({
 
@@ -1846,9 +3621,11 @@ app.delete(
 
         }
 
+
         throw deleteError;
 
       }
+
 
     } catch (error) {
 
@@ -1857,16 +3634,21 @@ app.delete(
         error
       );
 
+
       res.status(500).json({
+
         success: false,
+
         message:
           "Unable to delete menu item."
+
       });
 
     }
 
   }
 );
+
 
 /* =========================================================
    ADMIN - UPDATE MENU AVAILABILITY
@@ -1880,56 +3662,86 @@ app.patch(
     try {
 
       const foodId =
-        Number(req.params.id);
+        Number(
+          req.params.id
+        );
+
 
       const available =
-        Boolean(req.body.available);
+        Boolean(
+          req.body.available
+        );
 
-      if (!Number.isInteger(foodId)) {
+
+      if (
+        !Number.isInteger(foodId)
+      ) {
 
         return res.status(400).json({
+
           success: false,
+
           message:
             "Invalid food item."
+
         });
 
       }
 
+
       const [result] =
         await db.query(
+
           `
           UPDATE food_items
 
           SET is_available = ?
 
           WHERE id = ?
+
           `,
+
           [
+
             available ? 1 : 0,
+
             foodId
+
           ]
+
         );
 
-      if (result.affectedRows === 0) {
+
+      if (
+        result.affectedRows === 0
+      ) {
 
         return res.status(404).json({
+
           success: false,
+
           message:
             "Menu item not found."
+
         });
 
       }
+
 
       res.json({
 
         success: true,
 
         message:
+
           available
+
             ? "Menu item is now available."
+
             : "Menu item is now unavailable."
 
       });
+
 
     } catch (error) {
 
@@ -1938,10 +3750,14 @@ app.patch(
         error
       );
 
+
       res.status(500).json({
+
         success: false,
+
         message:
           "Unable to update menu availability."
+
       });
 
     }
@@ -1949,56 +3765,85 @@ app.patch(
   }
 );
 
+
 /* =========================================================
    SERVE FRONTEND
    ========================================================= */
 
 app.use(
+
   express.static(
-    path.join(__dirname, "public")
+
+    path.join(
+      __dirname,
+      "public"
+    )
+
   )
+
 );
+
 
 /* =========================================================
    DEFAULT PAGE
    ========================================================= */
 
-app.get("/", (req, res) => {
+app.get(
+  "/",
+  (req, res) => {
 
-  res.sendFile(
-    path.join(
-      __dirname,
-      "public",
-      "index.html"
-    )
-  );
+    res.sendFile(
 
-});
+      path.join(
+
+        __dirname,
+
+        "public",
+
+        "index.html"
+
+      )
+
+    );
+
+  }
+);
+
 
 /* =========================================================
    404 API HANDLER
-   IMPORTANT:
-   THIS MUST BE AFTER ALL API ROUTES
    ========================================================= */
 
-app.use("/api", (req, res) => {
+app.use(
+  "/api",
+  (req, res) => {
 
-  res.status(404).json({
-    success: false,
-    message:
-      "API endpoint not found."
-  });
+    res.status(404).json({
 
-});
+      success: false,
+
+      message:
+        "API endpoint not found."
+
+    });
+
+  }
+);
+
 
 /* =========================================================
    START SERVER
    ========================================================= */
 
-app.listen(PORT, () => {
+app.listen(
+  PORT,
+  () => {
 
-  console.log(
-    `Thulir Unavagam server running at http://localhost:${PORT}`
-  );
+    console.log(
 
-});
+      `Thulir Unavagam server running at http://localhost:${PORT}`
+
+    );
+
+  }
+);
