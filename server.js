@@ -3,7 +3,6 @@ require("dotenv").config();
 const express = require("express");
 const path = require("path");
 const crypto = require("crypto");
-const webpush = require("web-push");
 const db = require("./db");
 
 const app = express();
@@ -16,16 +15,6 @@ const PORT = Number(process.env.PORT) || 5000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-/* =========================================================
-   WEB PUSH CONFIGURATION
-   ========================================================= */
-
-webpush.setVapidDetails(
-  process.env.VAPID_SUBJECT,
-  process.env.VAPID_PUBLIC_KEY,
-  process.env.VAPID_PRIVATE_KEY
-);
 
 /* =========================================================
    ADMIN SESSION SYSTEM
@@ -228,220 +217,6 @@ app.get("/api/menu", async (req, res) => {
     });
   }
 });
-
-/* =========================================================
-   PUSH NOTIFICATION - GET PUBLIC VAPID KEY
-   ========================================================= */
-
-app.get("/api/notifications/public-key", (req, res) => {
-
-  res.json({
-    success: true,
-    publicKey: process.env.VAPID_PUBLIC_KEY
-  });
-
-});
-
-/* =========================================================
-   PUSH NOTIFICATION - SAVE CUSTOMER SUBSCRIPTION
-   ========================================================= */
-
-app.post("/api/notifications/subscribe", async (req, res) => {
-
-  try {
-
-    const { endpoint, keys } = req.body;
-
-    if (
-      !endpoint ||
-      !keys ||
-      !keys.p256dh ||
-      !keys.auth
-    ) {
-
-      return res.status(400).json({
-        success: false,
-        message: "Invalid notification subscription."
-      });
-
-    }
-
-    /* ---------------------------------------------
-       Avoid duplicate subscriptions
-       --------------------------------------------- */
-
-    const [existing] = await db.query(
-      `
-      SELECT id
-      FROM push_subscriptions
-      WHERE endpoint = ?
-      LIMIT 1
-      `,
-      [endpoint]
-    );
-
-    if (existing.length) {
-
-      await db.query(
-        `
-        UPDATE push_subscriptions
-        SET
-          p256dh = ?,
-          auth = ?
-        WHERE endpoint = ?
-        `,
-        [
-          keys.p256dh,
-          keys.auth,
-          endpoint
-        ]
-      );
-
-    } else {
-
-      await db.query(
-        `
-        INSERT INTO push_subscriptions
-        (
-          endpoint,
-          p256dh,
-          auth
-        )
-        VALUES (?, ?, ?)
-        `,
-        [
-          endpoint,
-          keys.p256dh,
-          keys.auth
-        ]
-      );
-
-    }
-
-    res.json({
-      success: true,
-      message: "Notifications enabled successfully."
-    });
-
-  } catch (error) {
-
-    console.error(
-      "SUBSCRIPTION ERROR:",
-      error
-    );
-
-    res.status(500).json({
-      success: false,
-      message:
-        "Unable to save notification subscription."
-    });
-
-  }
-
-});
-
-/* =========================================================
-   PUSH NOTIFICATION - SEND TO ALL CUSTOMERS
-   ========================================================= */
-
-async function sendMenuNotification() {
-
-  try {
-
-    const [subscriptions] =
-      await db.query(`
-        SELECT
-          id,
-          endpoint,
-          p256dh,
-          auth
-        FROM push_subscriptions
-      `);
-
-    if (!subscriptions.length) {
-
-      console.log(
-        "NO PUSH SUBSCRIPTIONS FOUND."
-      );
-
-      return;
-
-    }
-
-    const payload = JSON.stringify({
-      title: "🔔 Thulir Unavagam",
-      body:
-        "Today's menu is now available! Check the latest dishes.",
-      url: "/"
-    });
-
-    for (const subscription of subscriptions) {
-
-      const pushSubscription = {
-        endpoint: subscription.endpoint,
-
-        keys: {
-          p256dh: subscription.p256dh,
-          auth: subscription.auth
-        }
-
-      };
-
-      try {
-
-        await webpush.sendNotification(
-          pushSubscription,
-          payload
-        );
-
-        console.log(
-          `PUSH SENT TO SUBSCRIPTION ${subscription.id}`
-        );
-
-      } catch (pushError) {
-
-        console.error(
-          `PUSH ERROR FOR SUBSCRIPTION ${subscription.id}:`,
-          pushError.statusCode || pushError.message
-        );
-
-        /*
-         Remove expired/invalid subscriptions.
-         */
-
-        if (
-          pushError.statusCode === 404 ||
-          pushError.statusCode === 410
-        ) {
-
-          await db.query(
-            `
-            DELETE FROM push_subscriptions
-            WHERE id = ?
-            `,
-            [subscription.id]
-          );
-
-          console.log(
-            `REMOVED INVALID SUBSCRIPTION ${subscription.id}`
-          );
-
-        }
-
-      }
-
-    }
-
-  } catch (error) {
-
-    console.error(
-      "SEND MENU NOTIFICATION ERROR:",
-      error
-    );
-
-  }
-
-}
 
 /* =========================================================
    PLACE CUSTOMER ORDER
@@ -1763,42 +1538,12 @@ app.post(
         ]
       );
 
-      /*
-       * Send notification only when today's menu
-       * is being added.
-       */
-
-      let notificationSent = false;
-
-      const [todayRows] =
-        await db.query(
-          `
-          SELECT
-            CURDATE() AS today
-          `
-        );
-
-      const today =
-        todayRows[0]?.today
-          ?.toISOString()
-          ?.slice(0, 10);
-
-      if (menuDate === today) {
-
-        await sendMenuNotification();
-
-        notificationSent = true;
-
-      }
-
       res.status(201).json({
 
         success: true,
 
         message:
-          "Menu item added successfully.",
-
-        notificationSent
+          "Menu item added successfully."
 
       });
 
@@ -2229,14 +1974,7 @@ app.get("/", (req, res) => {
   );
 
 });
-app.get("/api/notifications/public-key", (req, res) => {
 
-    res.json({
-        success: true,
-        publicKey: process.env.VAPID_PUBLIC_KEY
-    });
-
-});
 /* =========================================================
    404 API HANDLER
    IMPORTANT:
