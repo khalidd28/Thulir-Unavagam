@@ -915,3 +915,257 @@ if (trackId) {
   }
 
 }
+// ==========================================
+// CUSTOMER PUSH NOTIFICATIONS
+// ==========================================
+
+async function enableNotifications() {
+
+  const button = document.getElementById("notifyBtn");
+
+  if (!button) {
+    return;
+  }
+
+  try {
+
+    // Check browser support
+    if (!("Notification" in window)) {
+
+      alert("This browser does not support notifications.");
+      return;
+
+    }
+
+    if (!("serviceWorker" in navigator)) {
+
+      alert("Service Worker is not supported by this browser.");
+      return;
+
+    }
+
+    if (!("PushManager" in window)) {
+
+      alert("Push notifications are not supported by this browser.");
+      return;
+
+    }
+
+
+    // Ask permission
+    const permission =
+      await Notification.requestPermission();
+
+    if (permission !== "granted") {
+
+      alert(
+        "Please allow notifications to receive new menu alerts."
+      );
+
+      return;
+
+    }
+
+
+    // Register service worker
+    const registration =
+      await navigator.serviceWorker.register("/sw.js");
+
+
+    // Get VAPID public key
+    const keyResponse =
+      await fetch("/api/notifications/public-key");
+
+    const keyData =
+      await keyResponse.json();
+
+    if (
+      !keyResponse.ok ||
+      !keyData.publicKey
+    ) {
+
+      throw new Error(
+        "Notification public key is unavailable."
+      );
+
+    }
+
+
+    // Check existing subscription
+    let subscription =
+      await registration.pushManager.getSubscription();
+
+
+    // Create subscription if required
+    if (!subscription) {
+
+      subscription =
+        await registration.pushManager.subscribe({
+
+          userVisibleOnly: true,
+
+          applicationServerKey:
+            urlBase64ToUint8Array(
+              keyData.publicKey
+            )
+
+        });
+
+    }
+
+
+    // Send subscription to server
+    const response =
+      await fetch(
+        "/api/notifications/subscribe",
+        {
+
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body:
+            JSON.stringify(
+              subscription.toJSON()
+            )
+
+        }
+      );
+
+
+    const data =
+      await response.json();
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.message ||
+        "Unable to enable notifications."
+      );
+
+    }
+
+
+    button.textContent =
+      "🔔 Notifications Enabled";
+
+    button.disabled = true;
+
+    alert(
+      "Notifications enabled successfully!"
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      "NOTIFICATION ERROR:",
+      error
+    );
+
+    alert(
+      error.message ||
+      "Unable to enable notifications."
+    );
+
+  }
+
+}
+
+
+// ==========================================
+// BASE64 → UINT8ARRAY
+// ==========================================
+
+function urlBase64ToUint8Array(
+  base64String
+) {
+
+  const padding =
+    "=".repeat(
+      (4 - base64String.length % 4) % 4
+    );
+
+  const base64 =
+    (
+      base64String +
+      padding
+    )
+      .replace(/-/g, "+")
+      .replace(/_/g, "/");
+
+  const rawData =
+    window.atob(base64);
+
+  return Uint8Array.from(
+    [...rawData].map(
+      char => char.charCodeAt(0)
+    )
+  );
+
+}
+
+
+// ==========================================
+// REGISTER SERVICE WORKER
+// ==========================================
+
+if ("serviceWorker" in navigator) {
+
+  window.addEventListener(
+    "load",
+    async () => {
+
+      try {
+
+        await navigator.serviceWorker.register(
+          "/sw.js"
+        );
+
+        console.log(
+          "Service Worker registered."
+        );
+
+      } catch (error) {
+
+        console.error(
+          "SERVICE WORKER ERROR:",
+          error
+        );
+
+      }
+
+    }
+  );
+
+}
+
+
+// ==========================================
+// NOTIFICATION BUTTON
+// ==========================================
+
+document.addEventListener(
+  "DOMContentLoaded",
+  () => {
+
+    const button =
+      document.getElementById(
+        "notifyBtn"
+      );
+
+    if (button) {
+
+      button.addEventListener(
+        "click",
+        enableNotifications
+      );
+
+    }
+
+  }
+);

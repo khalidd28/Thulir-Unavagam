@@ -2229,7 +2229,14 @@ app.get("/", (req, res) => {
   );
 
 });
+app.get("/api/notifications/public-key", (req, res) => {
 
+    res.json({
+        success: true,
+        publicKey: process.env.VAPID_PUBLIC_KEY
+    });
+
+});
 /* =========================================================
    404 API HANDLER
    IMPORTANT:
