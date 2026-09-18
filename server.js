@@ -2282,7 +2282,172 @@ app.patch(
 
   }
 );
+/* =========================================================
+   ADMIN - WALK-IN / DIRECT SHOP SALE
+   ========================================================= */
 
+app.post(
+  "/api/admin/walk-in-sale",
+  requireAdmin,
+  async (req, res) => {
+
+    try {
+
+      const foodId =
+        Number(req.body.food_id);
+
+      const quantity =
+        Number(req.body.quantity);
+
+      const orderType =
+        String(req.body.order_type || "").trim();
+
+
+      // Validate food
+      if (
+        !Number.isInteger(foodId) ||
+        foodId <= 0
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Please select a food item."
+        });
+      }
+
+
+      // Validate quantity
+      if (
+        !Number.isInteger(quantity) ||
+        quantity < 1 ||
+        quantity > 100
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid quantity."
+        });
+      }
+
+
+      // Validate order type
+      if (
+        !["Dine-in", "Parcel"].includes(orderType)
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid order type."
+        });
+      }
+
+
+      // Get today's food item
+      const [foodRows] =
+        await db.query(
+          `
+          SELECT
+            id,
+            name,
+            price
+          FROM food_items
+          WHERE id = ?
+          AND menu_date = CURDATE()
+          AND is_available = TRUE
+          `,
+          [foodId]
+        );
+
+
+      if (!foodRows.length) {
+
+        return res.status(404).json({
+          success: false,
+          message:
+            "Food item is unavailable today."
+        });
+
+      }
+
+
+      const food = foodRows[0];
+
+
+      // Calculate food amount
+      const foodTotal =
+        Number(food.price) * quantity;
+
+
+      // ₹5 Parcel charge
+      const parcelCharge =
+        orderType === "Parcel"
+          ? 5
+          : 0;
+
+
+      const totalAmount =
+        foodTotal + parcelCharge;
+
+
+      // Save walk-in sale
+      await db.query(
+        `
+        INSERT INTO walk_in_sales
+        (
+          food_id,
+          food_name,
+          quantity,
+          unit_price,
+          total_amount,
+          order_type
+        )
+        VALUES (?, ?, ?, ?, ?, ?)
+        `,
+        [
+          food.id,
+          food.name,
+          quantity,
+          food.price,
+          totalAmount.toFixed(2),
+          orderType
+        ]
+      );
+
+
+      res.json({
+        success: true,
+
+        message:
+          "Walk-in sale recorded successfully.",
+
+        food_name:
+          food.name,
+
+        quantity,
+
+        order_type:
+          orderType,
+
+        total_amount:
+          totalAmount
+      });
+
+
+    } catch (error) {
+
+      console.error(
+        "WALK-IN SALE ERROR:",
+        error
+      );
+
+
+      res.status(500).json({
+        success: false,
+        message:
+          "Unable to record walk-in sale."
+      });
+
+    }
+
+  }
+);
 
 /* =========================================================
    ADMIN - DAILY ANALYTICS
@@ -3829,7 +3994,126 @@ app.use(
 
   }
 );
+/* =========================================================
+   ADMIN - WALK-IN / DIRECT SHOP SALE
+   ========================================================= */
 
+app.post(
+  "/api/admin/walk-in-sale",
+  requireAdmin,
+  async (req, res) => {
+
+    try {
+
+      const foodId = Number(req.body.food_id);
+      const quantity = Number(req.body.quantity);
+      const orderType =
+        String(req.body.order_type || "").trim();
+
+      if (!Number.isInteger(foodId) || foodId <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Please select a food item."
+        });
+      }
+
+      if (
+        !Number.isInteger(quantity) ||
+        quantity < 1 ||
+        quantity > 100
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid quantity."
+        });
+      }
+
+      if (!["Dine-in", "Parcel"].includes(orderType)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid order type."
+        });
+      }
+
+      const [foodRows] = await db.query(
+        `
+        SELECT
+          id,
+          name,
+          price
+        FROM food_items
+        WHERE id = ?
+        AND menu_date = CURDATE()
+        AND is_available = TRUE
+        `,
+        [foodId]
+      );
+
+      if (!foodRows.length) {
+        return res.status(404).json({
+          success: false,
+          message: "Food item is unavailable today."
+        });
+      }
+
+      const food = foodRows[0];
+
+      const foodTotal =
+        Number(food.price) * quantity;
+
+      const parcelCharge =
+        orderType === "Parcel" ? 5 : 0;
+
+      const totalAmount =
+        foodTotal + parcelCharge;
+
+      await db.query(
+        `
+        INSERT INTO walk_in_sales
+        (
+          food_id,
+          food_name,
+          quantity,
+          unit_price,
+          total_amount,
+          order_type
+        )
+        VALUES (?, ?, ?, ?, ?, ?)
+        `,
+        [
+          food.id,
+          food.name,
+          quantity,
+          food.price,
+          totalAmount.toFixed(2),
+          orderType
+        ]
+      );
+
+      res.json({
+        success: true,
+        message: "Walk-in sale recorded successfully.",
+        food_name: food.name,
+        quantity,
+        order_type: orderType,
+        total_amount: totalAmount
+      });
+
+    } catch (error) {
+
+      console.error(
+        "WALK-IN SALE ERROR:",
+        error
+      );
+
+      res.status(500).json({
+        success: false,
+        message: "Unable to record walk-in sale."
+      });
+
+    }
+  }
+);
 
 /* =========================================================
    START SERVER

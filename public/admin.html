@@ -1744,7 +1744,77 @@ if(sessionStorage.getItem("adminLoggedIn") !== "true"){
   ></p>
 
 </section>
+<!-- WALK-IN / DIRECT SHOP SALE -->
 
+<section class="section" id="walkInSection">
+
+  <div class="section-header">
+    <div>
+      <h2>🏪 Walk-in / Direct Shop Sale</h2>
+      <p>Record sales from customers who come directly to the shop.</p>
+    </div>
+  </div>
+
+  <form id="walkInForm">
+
+    <div class="form-grid">
+
+      <div class="form-group">
+        <label for="walkInFood">Food Item</label>
+
+        <select id="walkInFood" required>
+          <option value="">Select food item</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="walkInQuantity">Quantity</label>
+
+        <input
+          type="number"
+          id="walkInQuantity"
+          min="1"
+          value="1"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="walkInOrderType">Order Type</label>
+
+        <select id="walkInOrderType" required>
+          <option value="Dine-in">Dine-in</option>
+          <option value="Parcel">Parcel</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Total Amount</label>
+
+        <div
+          id="walkInTotal"
+          style="
+            font-size:22px;
+            font-weight:bold;
+            color:#174d08;
+            padding:10px 0;
+          "
+        >
+          ₹0.00
+        </div>
+      </div>
+
+    </div>
+
+    <button type="submit" class="add-menu-btn">
+      ➕ Add Walk-in Sale
+    </button>
+
+    <div id="walkInMessage" class="message"></div>
+
+  </form>
+
+</section>
 
 <!-- =========================
      MENU MANAGEMENT
@@ -4134,7 +4204,191 @@ async function logoutAdmin(){
     "admin-login.html";
 
 }
+/* =========================================================
+   WALK-IN / DIRECT SHOP SALES
+   ========================================================= */
 
+let walkInMenu = [];
+
+
+async function loadWalkInFoodItems() {
+
+  const select = document.getElementById("walkInFood");
+
+  try {
+
+    const response = await fetch("/api/admin/menu");
+
+    if (!response.ok) {
+      throw new Error("Unable to load menu.");
+    }
+
+    const menu = await response.json();
+
+    walkInMenu = menu.filter(item => item.available);
+
+    select.innerHTML =
+      `<option value="">Select food item</option>`;
+
+    walkInMenu.forEach(item => {
+
+      select.innerHTML += `
+        <option
+          value="${item.food_id}"
+          data-price="${Number(item.price)}"
+        >
+          ${escapeHtml(item.name)} - ₹${Number(item.price).toFixed(2)}
+        </option>
+      `;
+
+    });
+
+    calculateWalkInTotal();
+
+  } catch (error) {
+
+    console.error("WALK-IN MENU ERROR:", error);
+
+    select.innerHTML =
+      `<option value="">Unable to load menu</option>`;
+
+  }
+}
+
+
+function calculateWalkInTotal() {
+
+  const select =
+    document.getElementById("walkInFood");
+
+  const quantity =
+    Number(document.getElementById("walkInQuantity").value) || 0;
+
+  const orderType =
+    document.getElementById("walkInOrderType").value;
+
+  const selectedOption =
+    select.options[select.selectedIndex];
+
+  const price =
+    Number(selectedOption?.dataset.price || 0);
+
+  let total = price * quantity;
+
+  if (orderType === "Parcel") {
+    total += 5;
+  }
+
+  document.getElementById("walkInTotal").textContent =
+    formatMoney(total);
+}
+
+
+document
+  .getElementById("walkInFood")
+  .addEventListener(
+    "change",
+    calculateWalkInTotal
+  );
+
+
+document
+  .getElementById("walkInQuantity")
+  .addEventListener(
+    "input",
+    calculateWalkInTotal
+  );
+
+
+document
+  .getElementById("walkInOrderType")
+  .addEventListener(
+    "change",
+    calculateWalkInTotal
+  );
+
+
+document
+  .getElementById("walkInForm")
+  .addEventListener("submit", async function(event) {
+
+    event.preventDefault();
+
+    const foodId =
+      Number(document.getElementById("walkInFood").value);
+
+    const quantity =
+      Number(document.getElementById("walkInQuantity").value);
+
+    const orderType =
+      document.getElementById("walkInOrderType").value;
+
+    const message =
+      document.getElementById("walkInMessage");
+
+
+    message.textContent = "Recording sale...";
+
+
+    try {
+
+      const response = await fetch(
+        "/api/admin/walk-in-sale",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json"
+          },
+
+          body: JSON.stringify({
+            food_id: foodId,
+            quantity: quantity,
+            order_type: orderType
+          })
+        }
+      );
+
+
+      const data = await response.json();
+
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Unable to record sale."
+        );
+      }
+
+
+      message.textContent =
+        `✅ Sale recorded successfully — ${formatMoney(data.total_amount)}`;
+
+      message.style.color = "green";
+
+
+      document.getElementById("walkInForm").reset();
+
+      document.getElementById("walkInQuantity").value = 1;
+
+      calculateWalkInTotal();
+
+    } catch (error) {
+
+      console.error("WALK-IN SALE ERROR:", error);
+
+      message.textContent =
+        "❌ " + error.message;
+
+      message.style.color = "red";
+
+    }
+
+  });
+
+
+/* Load walk-in menu */
+
+loadWalkInFoodItems();
 </script>
 
 </body>
