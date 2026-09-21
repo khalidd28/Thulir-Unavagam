@@ -1275,6 +1275,109 @@ if(sessionStorage.getItem("adminLoggedIn") !== "true"){
       </small>
 
     </div>
+    <div class="analytics-card">
+
+  <div class="analytics-icon">
+    💰
+  </div>
+
+  <h3 id="analyticsSales">
+    ₹0.00
+  </h3>
+
+  <p>
+    Total Sales
+  </p>
+
+  <small>
+    Online + Walk-in
+  </small>
+
+</div>
+
+
+<div class="analytics-card">
+
+  <div class="analytics-icon">
+    🌐
+  </div>
+
+  <h3 id="analyticsOnlineSales">
+    ₹0.00
+  </h3>
+
+  <p>
+    Online Sales
+  </p>
+
+  <small>
+    Customer orders
+  </small>
+
+</div>
+
+
+<div class="analytics-card">
+
+  <div class="analytics-icon">
+    🏪
+  </div>
+
+  <h3 id="analyticsWalkInSales">
+    ₹0.00
+  </h3>
+
+  <p>
+    Walk-in Sales
+  </p>
+
+  <small>
+    Direct shop sales
+  </small>
+
+</div>
+
+
+<div class="analytics-card">
+
+  <div class="analytics-icon">
+    🍽️
+  </div>
+
+  <h3 id="analyticsDineInSales">
+    ₹0.00
+  </h3>
+
+  <p>
+    Dine-in Sales
+  </p>
+
+  <small>
+    Dine-in orders
+  </small>
+
+</div>
+
+
+<div class="analytics-card">
+
+  <div class="analytics-icon">
+    📦
+  </div>
+
+  <h3 id="analyticsParcelSales">
+    ₹0.00
+  </h3>
+
+  <p>
+    Parcel Sales
+  </p>
+
+  <small>
+    Parcel orders
+  </small>
+
+</div>
 
 
     <div class="analytics-card">
@@ -1507,6 +1610,26 @@ if(sessionStorage.getItem("adminLoggedIn") !== "true"){
     </div>
 
   </div>
+  <!-- TOP-SELLING FOODS -->
+
+<div class="daily-category-box">
+
+  <div class="daily-category-title">
+    🏆 Top-Selling Foods
+  </div>
+
+  <div
+    id="topFoodsContainer"
+    style="margin-top:15px;"
+  >
+
+    <div class="empty-state">
+      No sales data available for this date.
+    </div>
+
+  </div>
+
+</div>
 
 
   <!-- SUMMARY -->
@@ -3251,6 +3374,44 @@ async function loadAnalytics(){
         Number(
           data.dateSummary?.totalOrders || 0
         );
+        document
+  .getElementById(
+    "analyticsOnlineSales"
+  )
+  .textContent =
+    formatMoney(
+      data.dateSummary?.onlineSales || 0
+    );
+
+
+document
+  .getElementById(
+    "analyticsWalkInSales"
+  )
+  .textContent =
+    formatMoney(
+      data.dateSummary?.walkInSales || 0
+    );
+
+
+document
+  .getElementById(
+    "analyticsDineInSales"
+  )
+  .textContent =
+    formatMoney(
+      data.dateSummary?.dineInSales || 0
+    );
+
+
+document
+  .getElementById(
+    "analyticsParcelSales"
+  )
+  .textContent =
+    formatMoney(
+      data.dateSummary?.parcelSales || 0
+    );
 
 
     /* TOTAL DAILY SALES */
@@ -3375,7 +3536,60 @@ async function loadAnalytics(){
       )
       .join("");
 
+    /* TOP-SELLING FOODS */
 
+const topFoodsContainer =
+  document.getElementById(
+    "topFoodsContainer"
+  );
+
+
+const topFoods =
+  data.topFoods || [];
+
+
+if (!topFoods.length) {
+
+  topFoodsContainer.innerHTML = `
+    <div class="empty-state">
+      No sales data available for this date.
+    </div>
+  `;
+
+} else {
+
+  topFoodsContainer.innerHTML =
+    topFoods
+      .map(
+        (food, index) => `
+
+          <div
+            class="report-row"
+            style="
+              display:flex;
+              justify-content:space-between;
+              align-items:center;
+              padding:12px 0;
+              border-bottom:1px solid #eee;
+            "
+          >
+
+            <strong>
+              ${index + 1}. ${escapeHtml(food.foodName)}
+            </strong>
+
+            <span>
+              ${food.quantitySold} items /
+              ${formatMoney(food.sales)}
+            </span>
+
+          </div>
+
+        `
+      )
+      .join("");
+
+}
     displayDateOrders(
       data.dateOrders || []
     );

@@ -2476,40 +2476,119 @@ app.get(
               .slice(0, 10);
 
 
-      const [dateSummaryRows] =
-        await db.query(
+     const [onlineSummaryRows] =
+  await db.query(
+    `
+    SELECT
+      COUNT(*) AS totalOrders,
+      COALESCE(SUM(total_amount), 0) AS totalSales,
 
-          `
-          SELECT
+      COALESCE(
+        SUM(
+          CASE
+            WHEN order_type = 'Dine-in'
+            THEN total_amount
+            ELSE 0
+          END
+        ),
+        0
+      ) AS dineInSales,
 
-            COUNT(*) AS totalOrders,
+      COALESCE(
+        SUM(
+          CASE
+            WHEN order_type = 'Parcel'
+            THEN total_amount
+            ELSE 0
+          END
+        ),
+        0
+      ) AS parcelSales
 
-            COALESCE(
-              SUM(total_amount),
-              0
-            ) AS totalSales
+    FROM orders
 
-          FROM orders
-
-          WHERE DATE(created_at) = ?
-
-          AND status = 'Completed'
-
-          `,
-
-          [selectedDate]
-
-        );
+    WHERE DATE(created_at) = ?
+    AND status = 'Completed'
+    `,
+    [selectedDate]
+  );
 
 
-      const dateSummary =
-        dateSummaryRows[0] || {
+const [walkInSummaryRows] =
+  await db.query(
+    `
+    SELECT
+      COUNT(*) AS totalOrders,
+      COALESCE(SUM(total_amount), 0) AS totalSales,
 
-          totalOrders: 0,
+      COALESCE(
+        SUM(
+          CASE
+            WHEN order_type = 'Dine-in'
+            THEN total_amount
+            ELSE 0
+          END
+        ),
+        0
+      ) AS dineInSales,
 
-          totalSales: 0
+      COALESCE(
+        SUM(
+          CASE
+            WHEN order_type = 'Parcel'
+            THEN total_amount
+            ELSE 0
+          END
+        ),
+        0
+      ) AS parcelSales
 
-        };
+    FROM walk_in_sales
+
+    WHERE DATE(created_at) = ?
+    `,
+    [selectedDate]
+  );
+
+
+const onlineSummary =
+  onlineSummaryRows[0] || {};
+
+const walkInSummary =
+  walkInSummaryRows[0] || {};
+
+
+const dateSummary = {
+
+  totalOrders:
+    Number(onlineSummary.totalOrders || 0) +
+    Number(walkInSummary.totalOrders || 0),
+
+  totalSales:
+    Number(onlineSummary.totalSales || 0) +
+    Number(walkInSummary.totalSales || 0),
+
+  onlineOrders:
+    Number(onlineSummary.totalOrders || 0),
+
+  onlineSales:
+    Number(onlineSummary.totalSales || 0),
+
+  walkInOrders:
+    Number(walkInSummary.totalOrders || 0),
+
+  walkInSales:
+    Number(walkInSummary.totalSales || 0),
+
+  dineInSales:
+    Number(onlineSummary.dineInSales || 0) +
+    Number(walkInSummary.dineInSales || 0),
+
+  parcelSales:
+    Number(onlineSummary.parcelSales || 0) +
+    Number(walkInSummary.parcelSales || 0)
+
+};
 
 
       const [categoryRows] =
@@ -2766,6 +2845,58 @@ app.get(
               MONTH(CURDATE())
 
         `);
+        const [topFoodRows] =
+  await db.query(
+    `
+    SELECT
+      oi.food_item_id,
+      f.name AS food_name,
+
+      SUM(oi.quantity) AS quantitySold,
+
+      COALESCE(
+        SUM(oi.quantity * oi.price),
+        0
+      ) AS sales
+
+    FROM order_items oi
+
+    INNER JOIN orders o
+      ON oi.order_id = o.id
+
+    INNER JOIN food_items f
+      ON oi.food_item_id = f.id
+
+    WHERE DATE(o.created_at) = ?
+    AND o.status = 'Completed'
+
+    GROUP BY
+      oi.food_item_id,
+      f.name
+
+    ORDER BY
+      quantitySold DESC
+
+    LIMIT 10
+    `,
+    [selectedDate]
+  );
+
+
+const topFoods =
+  topFoodRows.map(row => ({
+    foodId:
+      Number(row.food_item_id),
+
+    foodName:
+      row.food_name,
+
+    quantitySold:
+      Number(row.quantitySold || 0),
+
+    sales:
+      Number(row.sales || 0)
+  }));
 
 
       const [dateOrders] =
@@ -2812,19 +2943,34 @@ app.get(
 
         dateSummary: {
 
-          totalOrders:
-            Number(
-              dateSummary.totalOrders || 0
-            ),
+  totalOrders:
+    Number(dateSummary.totalOrders || 0),
 
-          totalSales:
-            Number(
-              dateSummary.totalSales || 0
-            )
+  totalSales:
+    Number(dateSummary.totalSales || 0),
 
-        },
+  onlineOrders:
+    Number(dateSummary.onlineOrders || 0),
+
+  onlineSales:
+    Number(dateSummary.onlineSales || 0),
+
+  walkInOrders:
+    Number(dateSummary.walkInOrders || 0),
+
+  walkInSales:
+    Number(dateSummary.walkInSales || 0),
+
+  dineInSales:
+    Number(dateSummary.dineInSales || 0),
+
+  parcelSales:
+    Number(dateSummary.parcelSales || 0)
+
+},
 
         categories,
+        topFoods,
 
         categorySales:
           categories,
