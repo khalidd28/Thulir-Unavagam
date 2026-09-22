@@ -1484,27 +1484,27 @@ if (orderType === "Parcel") {
           INSERT INTO orders
           (
             customer_name,
-phone,
-total_amount,
-status,
-order_type,
-arrival_time,
-payment_method
+            phone,
+            total_amount,
+            status,
+            order_type,
+            arrival_time,
+            payment_method
           )
           VALUES (?, ?, ?, 'New', ?, ?, ?)
           `,
 
-          [
-            [
-  customerName,
-  phone,
-  totalAmount.toFixed(2),
-  orderType,
-  arrivalTime,
-  paymentMethod
-]
+          
+        [
+          customerName,
+          phone,
+          totalAmount.toFixed(2),
+          orderType,
+          arrivalTime,
+          paymentMethod
+        ]
 
-          ]
+          
 
         );
 
@@ -1667,8 +1667,8 @@ app.get(
             order_type,
 
             arrival_time,
-
-            created_at
+payment_method,
+created_at
 
           FROM orders
 
