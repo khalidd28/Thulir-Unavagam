@@ -1484,26 +1484,25 @@ if (orderType === "Parcel") {
           INSERT INTO orders
           (
             customer_name,
-            phone,
-            total_amount,
-            status,
-            order_type,
-            arrival_time
+phone,
+total_amount,
+status,
+order_type,
+arrival_time,
+payment_method
           )
-          VALUES (?, ?, ?, 'New', ?, ?)
+          VALUES (?, ?, ?, 'New', ?, ?, ?)
           `,
 
           [
-
-            customerName,
-
-            phone,
-
-            totalAmount.toFixed(2),
-
-            orderType,
-
-            arrivalTime
+            [
+  customerName,
+  phone,
+  totalAmount.toFixed(2),
+  orderType,
+  arrivalTime,
+  paymentMethod
+]
 
           ]
 

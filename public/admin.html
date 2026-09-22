@@ -647,7 +647,72 @@ textarea:focus{
   font-size:12px;
   font-weight:bold;
 }
+.status-new {
+  background: #fff3cd;
+  color: #856404;
+}
 
+.status-accepted {
+  background: #cfe2ff;
+  color: #084298;
+}
+
+.status-preparing {
+  background: #e2d9f3;
+  color: #432874;
+}
+
+.status-ready {
+  background: #d1e7dd;
+  color: #0f5132;
+}
+
+.status-completed {
+  background: #d1e7dd;
+  color: #0f5132;
+}
+
+.status-cancelled {
+  background: #f8d7da;
+  color: #842029;
+}
+.status-btn {
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.status-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.new-btn {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.accepted-btn {
+  background: #cfe2ff;
+  color: #084298;
+}
+
+.preparing-btn {
+  background: #e2d9f3;
+  color: #432874;
+}
+
+.ready-btn {
+  background: #d1e7dd;
+  color: #0f5132;
+}
+
+.completed-btn {
+  background: #d1e7dd;
+  color: #0f5132;
+}
 .order-details-grid{
   display:grid;
   grid-template-columns:repeat(3,1fr);
@@ -2095,8 +2160,14 @@ if(sessionStorage.getItem("adminLoggedIn") !== "true"){
    BASIC VARIABLES
 ========================= */
 
+const now = new Date();
+
 const today =
-  new Date().toISOString().split("T")[0];
+  now.getFullYear() +
+  "-" +
+  String(now.getMonth() + 1).padStart(2, "0") +
+  "-" +
+  String(now.getDate()).padStart(2, "0");
 
 document.getElementById("menuDate").value = today;
 document.getElementById("analyticsDate").value = today;
@@ -2963,7 +3034,12 @@ function displayOrders(orders){
 
     return;
   }
-
+    const openOrderDates =
+  new Set(
+    [...document.querySelectorAll(".date-orders")]
+      .filter(el => el.style.display === "block")
+      .map(el => el.id.replace("orders-", ""))
+  );
 
   const sorted =
     [...orders].sort(
@@ -2978,10 +3054,7 @@ function displayOrders(orders){
 
   sorted.forEach(order=>{
 
-    const date =
-      new Date(
-        order.created_at
-      );
+    const date = new Date(order.created_at);
 
     const key =
       `${date.getFullYear()}-${
@@ -3018,7 +3091,10 @@ function displayOrders(orders){
       dateKey=>{
 
         const isToday =
-          dateKey === todayKey;
+  dateKey === today;
+
+const wasOpen =
+  openOrderDates.has(dateKey);
 
         const ordersForDate =
           groups[dateKey];
@@ -3080,13 +3156,14 @@ function displayOrders(orders){
             <div
               id="orders-${dateKey}"
               class="date-orders"
+             
               style="
-                display:${
-                  isToday
-                    ? "block"
-                    : "none"
-                };
-              "
+  display:${
+    isToday || wasOpen
+      ? "block"
+      : "none"
+  };
+"
             >
 
               ${
@@ -3115,71 +3192,116 @@ function displayOrders(orders){
 
 function renderOrderCard(order){
 
-  return `
-    <div class="order">
+  const statusClass =
+    String(order.status || "")
+      .toLowerCase()
+      .replace(/\s+/g, "-");
 
+  return `
+    <div class="order order-card">
+
+      <!-- ORDER HEADER -->
       <div class="order-top">
 
-        <h2>
-          🧾 Order #${order.order_id}
-        </h2>
+        <div>
+          <h2>
+            🧾 Order #${order.order_id}
+          </h2>
 
-        <span class="status">
-          ${escapeHtml(order.status)}
-        </span>
+          <small>
+  🕒 ${new Date(order.created_at).toLocaleString()}
+</small>
+        </div>
+
+        <span class="status status-${order.status.toLowerCase()}">
+  ${escapeHtml(order.status)}
+</span>
 
       </div>
 
-      <p>
-        <strong>👤 Customer:</strong>
-        ${escapeHtml(order.customer_name)}
-      </p>
 
-      <p>
-        <strong>📞 Phone:</strong>
-        ${escapeHtml(order.phone)}
-      </p>
+      <!-- CUSTOMER DETAILS -->
+      <div class="order-details">
 
-      <p>
-        <strong>🍽️ Order Type:</strong>
-        ${escapeHtml(order.order_type || "")}
-      </p>
+        <p>
+          <strong>👤 Customer</strong><br>
+          ${escapeHtml(order.customer_name)}
+        </p>
 
-      <p>
-        <strong>⏰ Expected Arrival:</strong>
-        ${escapeHtml(order.arrival_time || "")}
-      </p>
+        <p>
+          <strong>📞 Phone</strong><br>
+          ${escapeHtml(order.phone)}
+        </p>
 
+        <p>
+  <strong>🍽️ Order Type:</strong>
+  ${escapeHtml(order.order_type || "Not specified")}
+</p>
+       <p>
+  <strong>💳 Payment:</strong>
+  ${escapeHtml(order.payment_method || "Cash Payment")}
+</p>
+
+        <p>
+  <strong>⏰ Expected Arrival:</strong>
+  ${escapeHtml(order.arrival_time || "Not specified")}
+</p>
+
+      </div>
+
+
+      <!-- ORDER ITEMS -->
       <div class="order-items">
 
-        <strong>🍴 Ordered Items</strong>
+        <h3>🍴 Ordered Items</h3>
 
         ${
           (order.items || [])
-          .map(item => `
-            <p>
-              ${escapeHtml(item.food_name)}
-              × ${item.quantity}
-              =
-              ₹${(
-                Number(item.unit_price) *
-                Number(item.quantity)
-              ).toFixed(2)}
-            </p>
-          `)
-          .join("")
+            .map(item => `
+
+              <div class="order-item-row">
+
+                <span>
+                  ${escapeHtml(item.food_name)}
+                  × ${item.quantity}
+                </span>
+
+                <strong>
+                  ₹${(
+                    Number(item.unit_price) *
+                    Number(item.quantity)
+                  ).toFixed(2)}
+                </strong>
+
+              </div>
+
+            `)
+            .join("")
         }
 
       </div>
 
-      <p>
-        <strong>💰 Total:</strong>
-        ₹${Number(order.total_amount).toFixed(2)}
-      </p>
 
+      <!-- TOTAL -->
+      <div class="order-total">
+
+        <span>
+          💰 Total Amount
+        </span>
+
+        <p class="order-total-row">
+  <strong>💰 Total:</strong>
+  ₹${Number(order.total_amount).toFixed(2)}
+</p>
+
+      </div>
+
+
+      <!-- STATUS BUTTONS -->
       <div class="status-buttons">
 
         <button
+        class="status-btn new-btn"
           onclick="updateStatus(${order.order_id},'New')"
           ${order.status === "New" ? "disabled" : ""}
         >
@@ -3187,6 +3309,7 @@ function renderOrderCard(order){
         </button>
 
         <button
+          class="status-btn accepted-btn"
           onclick="updateStatus(${order.order_id},'Accepted')"
           ${order.status === "Accepted" ? "disabled" : ""}
         >
@@ -3194,6 +3317,7 @@ function renderOrderCard(order){
         </button>
 
         <button
+          class="status-btn preparing-btn"
           onclick="updateStatus(${order.order_id},'Preparing')"
           ${order.status === "Preparing" ? "disabled" : ""}
         >
@@ -3201,6 +3325,7 @@ function renderOrderCard(order){
         </button>
 
         <button
+          class="status-btn ready-btn"
           onclick="updateStatus(${order.order_id},'Ready')"
           ${order.status === "Ready" ? "disabled" : ""}
         >
@@ -3208,6 +3333,7 @@ function renderOrderCard(order){
         </button>
 
         <button
+          class="status-btn completed-btn"
           onclick="updateStatus(${order.order_id},'Completed')"
           ${order.status === "Completed" ? "disabled" : ""}
         >
@@ -3215,12 +3341,14 @@ function renderOrderCard(order){
         </button>
 
         <button
-          class="cancel-btn"
+          class="status-btn cancelled-btn"
           onclick="updateStatus(${order.order_id},'Cancelled')"
-          ${order.status === "Cancelled" ||
+          ${
+            order.status === "Cancelled" ||
             order.status === "Completed"
-            ? "disabled"
-            : ""}
+              ? "disabled"
+              : ""
+          }
         >
           ❌ Cancelled
         </button>
@@ -3230,7 +3358,6 @@ function renderOrderCard(order){
     </div>
   `;
 }
-
 /* =========================
    TOGGLE DATE
 ========================= */
@@ -3271,6 +3398,15 @@ function toggleOrderDate(dateKey){
     arrow.textContent="▶";
 
   }
+  openOrderDates.clear();
+
+document.querySelectorAll(".date-orders").forEach(el => {
+  if (el.style.display === "block") {
+    openOrderDates.add(
+      el.id.replace("orders-", "")
+    );
+  }
+});
 
 }
 
