@@ -2,7 +2,7 @@ let menu = [];
 let selectedCategory = "All";
 let searchText = "";
 let cart =
-  JSON.parse(localStorage.getItem("thulirCart")) || [];
+  JSON.parse(localStorage.getItem("thuliirCart")) || [];
 
 let trackingInterval = null;
 
@@ -370,7 +370,7 @@ function addToCart(foodId, foodName, foodPrice) {
   }
 
   localStorage.setItem(
-    "thulirCart",
+    "thuliirCart",
     JSON.stringify(cart)
   );
 

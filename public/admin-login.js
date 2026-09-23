@@ -53,7 +53,6 @@ document
       window.location.href = "admin.html";
 
     } catch (error) {
-
       message.textContent =
         "❌ " + error.message;
 

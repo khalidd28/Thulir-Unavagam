@@ -1,5 +1,5 @@
 let cart = JSON.parse(
-  localStorage.getItem("thulirCart") || "[]"
+  localStorage.getItem("thuliirCart") || "[]"
 );
 
 // =====================================================
@@ -482,7 +482,7 @@ async function placeOrder(event) {
     // =================================================
 
     localStorage.removeItem(
-      "thulirCart"
+      "thuliirCart"
     );
 
     cart = [];
@@ -573,7 +573,7 @@ function showOrderConfirmation(data) {
 
         <p>
           Thank you for ordering from
-          Thulir Unavagam.
+          Thuliir Unavagam.
         </p>
 
       </div>
@@ -971,7 +971,7 @@ async function fetchOrderStatus(orderId) {
           Your order is completed.
 
           Thank you for visiting
-          Thulir Unavagam!
+          Thuliir Unavagam!
 
         </div>
 
@@ -1100,7 +1100,7 @@ function printReceipt() {
     <head>
 
       <title>
-        Thulir Unavagam Receipt
+        Thuliir Unavagam Receipt
       </title>
 
 
@@ -1228,7 +1228,7 @@ function printReceipt() {
       <div class="receipt">
 
         <h1>
-          Thulir Unavagam
+          Thuliir Unavagam
         </h1>
 
 
@@ -1330,7 +1330,7 @@ function printReceipt() {
         <div class="footer">
 
           Thank you for choosing
-          Thulir Unavagam! ❤️
+          Thuliir Unavagam! ❤️
 
         </div>
 

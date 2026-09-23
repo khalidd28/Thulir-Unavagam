@@ -4,7 +4,7 @@
 
 let cart =
   JSON.parse(
-    localStorage.getItem("thulirCart") || "[]"
+    localStorage.getItem("thuliirCart") || "[]"
   );
 
 
@@ -109,7 +109,7 @@ function getFoodImage(name) {
 function saveCart() {
 
   localStorage.setItem(
-    "thulirCart",
+    "thuliirCart",
     JSON.stringify(cart)
   );
 
