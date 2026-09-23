@@ -1114,7 +1114,12 @@ if(sessionStorage.getItem("adminLoggedIn") !== "true"){
     >
       🛒 Customer Orders
     </a>
-
+    <a
+  class="nav-link"
+  href="#thuliir-grow"
+>
+  🌱 Thuliir Grow
+</a>
   </div>
 
 
@@ -2076,6 +2081,36 @@ if(sessionStorage.getItem("adminLoggedIn") !== "true"){
   </div>
 
 </section>
+<section
+  id="thuliir-grow"
+  class="section"
+>
+
+  <div class="section-header">
+
+    <div>
+
+      <h2>
+        🌱 Thuliir Grow Registrations
+      </h2>
+
+      <p>
+        Students who pre-registered for Thuliir Grow.
+      </p>
+
+    </div>
+
+  </div>
+
+  <div id="growRegistrationsContainer">
+
+    <div class="empty-state">
+      Loading registrations...
+    </div>
+
+  </div>
+
+</section>
 
 </main>
 
@@ -2974,7 +3009,167 @@ async function loadOrders(){
 
 }
 
+async function loadGrowRegistrations(){
 
+  try{
+
+    const response =
+      await fetch(
+        "/api/admin/thuliir-grow"
+      );
+
+    if(!response.ok){
+
+      throw new Error(
+        "Unable to load registrations."
+      );
+
+    }
+
+    const registrations =
+      await response.json();
+
+    const container =
+      document.getElementById(
+        "growRegistrationsContainer"
+      );
+
+    if(!registrations.length){
+
+      container.innerHTML = `
+        <div class="empty-state">
+          🌱 No Thuliir Grow registrations yet.
+        </div>
+      `;
+
+      return;
+    }
+
+    const groups = {};
+
+registrations.forEach(reg => {
+
+  const weekStart =
+  String(reg.week_start).slice(0, 10);
+
+  if (!groups[weekStart]) {
+    groups[weekStart] = [];
+  }
+
+  groups[weekStart].push(reg);
+
+});
+
+
+container.innerHTML =
+  Object.entries(groups)
+    .map(([weekStart, weekRegistrations], index) => {
+
+      const start =
+  new Date(
+    String(weekStart).slice(0, 10) +
+    "T00:00:00"
+  );
+
+      const end =
+        new Date(start);
+
+      end.setDate(
+        end.getDate() + 6
+      );
+
+      const formatDate = date =>
+        date.toLocaleDateString(
+          "en-IN",
+          {
+            day: "numeric",
+            month: "short",
+            year: "numeric"
+          }
+        );
+
+      const title =
+        index === 0
+          ? "🌱 This Week"
+          : `📅 Week of ${formatDate(start)}`;
+
+      return `
+        <div class="grow-week-group">
+
+          <h3>
+            ${title}
+          </h3>
+
+          <p>
+            ${formatDate(start)}
+            – ${formatDate(end)}
+            |
+            ${weekRegistrations.length}
+            Registration${weekRegistrations.length === 1 ? "" : "s"}
+          </p>
+
+          ${weekRegistrations.map(reg => `
+            <div class="order-card">
+
+              <h3>
+                🌱 ${escapeHtml(reg.name)}
+              </h3>
+
+              <p>
+                <strong>📱 Phone:</strong>
+                ${escapeHtml(reg.phone)}
+              </p>
+
+              <p>
+                <strong>🎓 College:</strong>
+                ${escapeHtml(
+                  reg.college || "Not specified"
+                )}
+              </p>
+
+              <p>
+                <strong>💡 Interests:</strong>
+                ${escapeHtml(
+                  reg.interests || "Not specified"
+                )}
+              </p>
+
+              <p>
+                <strong>🕒 Registered:</strong>
+                ${new Date(
+                  reg.created_at
+                ).toLocaleString()}
+              </p>
+
+            </div>
+          `).join("")}
+
+        </div>
+      `;
+
+    })
+    .join("");
+
+  }catch(error){
+
+    console.error(
+      "GROW REGISTRATIONS ERROR:",
+      error
+    );
+
+    document
+      .getElementById(
+        "growRegistrationsContainer"
+      )
+      .innerHTML = `
+        <div class="empty-state">
+          ❌ Unable to load registrations.
+        </div>
+      `;
+
+  }
+
+}
 /* =========================
    ORDER STATS
 ========================= */
@@ -4494,6 +4689,7 @@ document
 loadMenu();
 
 loadOrders();
+loadGrowRegistrations();
 
 loadAnalytics();
 

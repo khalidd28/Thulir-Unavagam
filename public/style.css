@@ -1601,3 +1601,177 @@ footer p {
         font-size: 17px;
     }
 }
+/* =========================================================
+   THULIIR GROW
+   ========================================================= */
+
+.grow-page {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 35px;
+  background: white;
+  border-radius: 18px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+}
+
+.grow-page h1 {
+  font-size: 38px;
+  margin-bottom: 10px;
+}
+
+.grow-page h2 {
+  font-size: 25px;
+  margin-bottom: 15px;
+}
+
+.grow-page p {
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.grow-page ul {
+  line-height: 2;
+  font-size: 17px;
+}
+
+.grow-page button {
+  background: #174d08;
+  color: white;
+  border: none;
+  padding: 12px 18px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.grow-page input,
+.grow-page textarea {
+  padding: 12px;
+  margin: 5px;
+  border: 1px solid #ccc;
+  border-radius: 7px;
+  font-size: 15px;
+}
+
+.grow-page textarea {
+  min-height: 45px;
+}
+.grow-hero {
+  text-align: center;
+  padding: 20px 10px 35px;
+}
+
+.grow-icon {
+  font-size: 55px;
+}
+
+.grow-hero h1 {
+  font-size: 42px;
+  margin: 5px 0;
+}
+
+.grow-hero h2 {
+  margin: 10px 0;
+}
+
+.grow-highlights {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.grow-highlights span {
+  padding: 9px 15px;
+  border-radius: 20px;
+  background: #e8f5e9;
+  font-weight: 600;
+}
+
+.grow-title {
+  text-align: center;
+  font-size: 25px;
+  margin: 25px 0;
+}
+
+.grow-activities {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.grow-card {
+  padding: 22px;
+  border-radius: 14px;
+  background: #f7fbf5;
+  text-align: center;
+}
+
+.grow-card span {
+  font-size: 35px;
+}
+
+.grow-card h3 {
+  margin: 10px 0;
+}
+
+.grow-card p {
+  font-size: 15px;
+}
+
+.grow-join {
+  text-align: center;
+  margin-top: 35px;
+  padding: 25px;
+  border-radius: 15px;
+  background: #e8f5e9;
+}
+
+@media (max-width: 700px) {
+  .grow-activities {
+    grid-template-columns: 1fr;
+  }
+
+  .grow-hero h1 {
+    font-size: 32px;
+  }
+}
+.home-grow-section {
+  margin: 40px 20px;
+  padding: 45px 20px;
+  border-radius: 20px;
+  background: #e8f5e9;
+  text-align: center;
+}
+
+.home-grow-icon {
+  font-size: 50px;
+}
+
+.home-grow-content h2 {
+  font-size: 32px;
+  margin: 8px 0;
+}
+
+.home-grow-content h3 {
+  font-size: 20px;
+  margin: 10px 0;
+}
+
+.home-grow-content p {
+  max-width: 600px;
+  margin: 0 auto 22px;
+  line-height: 1.6;
+}
+
+.grow-home-btn {
+  display: inline-block;
+  padding: 12px 20px;
+  border-radius: 8px;
+  background: #174d08;
+  color: white;
+  text-decoration: none;
+  font-weight: bold;
+}

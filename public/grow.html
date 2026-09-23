@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Thuliir Grow</title>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <section class="grow-page">
+
+  <div class="grow-hero">
+
+    <div class="grow-icon">🌱</div>
+
+    <h1>THULIIR GROW</h1>
+
+    <h2>Sundays are for more than just food.</h2>
+
+    <p>
+      A fun space where students can meet, learn, play, think,
+      explore new ideas and try something different every Sunday.
+    </p>
+
+    <div class="grow-highlights">
+      <span>📅 Every Sunday Morning</span>
+      <span>💰 Free Entry</span>
+      <span>🌱 Open to Students</span>
+    </div>
+
+  </div>
+
+
+  <h3 class="grow-title">
+    What happens at Thuliir Grow?
+  </h3>
+
+
+  <div class="grow-activities">
+
+    <div class="grow-card">
+      <span>🎮</span>
+      <h3>Fun Challenges & Games</h3>
+      <p>Interactive activities to have fun and connect with others.</p>
+    </div>
+
+    <div class="grow-card">
+      <span>🧠</span>
+      <h3>Self Discovery</h3>
+      <p>Activities that help you understand yourself better.</p>
+    </div>
+
+    <div class="grow-card">
+      <span>💬</span>
+      <h3>Discussions</h3>
+      <p>Share ideas, opinions and interesting conversations.</p>
+    </div>
+
+    <div class="grow-card">
+      <span>🚀</span>
+      <h3>Career & AI</h3>
+      <p>Sessions about careers, AI, business and life.</p>
+    </div>
+
+    <div class="grow-card">
+      <span>🛠️</span>
+      <h3>Workshops</h3>
+      <p>Learn practical skills through fun workshops.</p>
+    </div>
+
+    <div class="grow-card">
+      <span>🎤</span>
+      <h3>Guest Sessions</h3>
+      <p>Special sessions with interesting guests and creators.</p>
+    </div>
+
+  </div>
+
+
+  <div class="grow-join">
+
+    <h2>🌱 Want to be part of it?</h2>
+
+    <p>
+      Free to join • No limited slots • Registration helps us plan better
+    </p>
+
+    <button onclick="openGrowForm()">
+      🚀 I'm In! – Pre-Register
+    </button>
+
+  </div>
+
+
+  <div id="growForm" style="display:none; margin-top:25px;">
+
+    <input
+      type="text"
+      id="growName"
+      placeholder="Name *"
+    >
+
+    <input
+      type="text"
+      id="growPhone"
+      placeholder="Phone / WhatsApp number *"
+    >
+
+    <input
+      type="text"
+      id="growCollege"
+      placeholder="College / Organisation"
+    >
+
+    <textarea
+      id="growInterests"
+      placeholder="What are you interested in?"
+    ></textarea>
+
+    <button onclick="registerGrow()">
+      Register
+    </button>
+
+    <p id="growMessage"></p>
+
+  </div>
+
+</section>
+  <script>
+
+    function openGrowForm() {
+      document.getElementById("growForm").style.display = "block";
+    }
+
+    async function registerGrow() {
+
+      const name =
+        document.getElementById("growName").value.trim();
+
+      const phone =
+        document.getElementById("growPhone").value.trim();
+
+      const college =
+        document.getElementById("growCollege").value.trim();
+
+      const interests =
+        document.getElementById("growInterests").value.trim();
+
+      if (!name || !phone) {
+        alert("Please enter your name and phone number.");
+        return;
+      }
+
+      try {
+
+        const response = await fetch(
+          "/api/thuliir-grow/register",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+              name,
+              phone,
+              college,
+              interests
+            })
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message || "Registration failed."
+          );
+        }
+
+        document.getElementById("growMessage").textContent =
+          data.message;
+
+        document.getElementById("growName").value = "";
+        document.getElementById("growPhone").value = "";
+        document.getElementById("growCollege").value = "";
+        document.getElementById("growInterests").value = "";
+
+      } catch (error) {
+
+        alert(
+          error.message ||
+          "Unable to complete registration."
+        );
+
+      }
+
+    }
+
+  </script>
+
+</body>
+</html>

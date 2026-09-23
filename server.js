@@ -2029,8 +2029,60 @@ app.get(
 
   }
 );
+/* =========================================================
+   ADMIN - GET THULIIR GROW REGISTRATIONS
+   ========================================================= */
 
+app.get(
+  "/api/admin/thuliir-grow",
+  requireAdmin,
+  async (req, res) => {
 
+    try {
+
+      const [registrations] =
+        await db.query(`
+          SELECT
+            id,
+            name,
+            phone,
+            college,
+            interests,
+            created_at,
+
+            DATE_SUB(
+              DATE(created_at),
+              INTERVAL
+              ((DAYOFWEEK(created_at) + 6) % 7)
+              DAY
+            ) AS week_start
+
+          FROM thuliir_grow_registrations
+
+          ORDER BY
+            week_start DESC,
+            created_at DESC
+        `);
+
+      res.json(registrations);
+
+    } catch (error) {
+
+      console.error(
+        "ADMIN THULIIR GROW ERROR:",
+        error
+      );
+
+      res.status(500).json({
+        success: false,
+        message:
+          "Unable to load Thuliir Grow registrations."
+      });
+
+    }
+
+  }
+);
 /* =========================================================
    ADMIN - GET ALL ORDERS
    ========================================================= */
@@ -4075,7 +4127,78 @@ app.patch(
   }
 );
 
+/* =========================================================
+   THULIIR GROW - PRE REGISTRATION
+   ========================================================= */
 
+app.post(
+  "/api/thuliir-grow/register",
+  async (req, res) => {
+
+    try {
+
+      const name =
+        String(req.body.name || "").trim();
+
+      const phone =
+        String(req.body.phone || "").trim();
+
+      const college =
+        String(req.body.college || "").trim();
+
+      const interests =
+        String(req.body.interests || "").trim();
+
+      if (!name || !phone) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Name and phone number are required."
+        });
+      }
+
+      await db.query(
+        `
+        INSERT INTO thuliir_grow_registrations
+        (
+          name,
+          phone,
+          college,
+          interests
+        )
+        VALUES (?, ?, ?, ?)
+        `,
+        [
+          name,
+          phone,
+          college || null,
+          interests || null
+        ]
+      );
+
+      res.json({
+        success: true,
+        message:
+          "You're registered for Thuliir Grow! 🌱 We'll share the event details with you on WhatsApp."
+      });
+
+    } catch (error) {
+
+      console.error(
+        "THULIIR GROW REGISTRATION ERROR:",
+        error
+      );
+
+      res.status(500).json({
+        success: false,
+        message:
+          "Unable to complete registration."
+      });
+
+    }
+
+  }
+);
 /* =========================================================
    SERVE FRONTEND
    ========================================================= */
